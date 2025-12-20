@@ -10,6 +10,17 @@ A Japanese vocabulary learning app with reading practice, AI-generated sentences
 - **Conversation Mode**: Practice speaking Japanese with an AI conversation partner
 - **JLPT N5 Level**: Content designed for beginner learners
 
+## Quick Start (macOS)
+
+```bash
+git clone https://github.com/boyum/tanoshii
+cd tanoshii
+make init-mac
+make start
+```
+
+Then open **<http://localhost:8080>** in your browser.
+
 ## Requirements
 
 - macOS (Apple Silicon M1/M2/M3/M4 recommended)
@@ -17,65 +28,42 @@ A Japanese vocabulary learning app with reading practice, AI-generated sentences
 - Python 3.9+
 - Ollama (for AI text generation)
 
-## Setup Instructions
-
-### 1. Install Homebrew (if not already installed)
+## Available Commands
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+make help         # Show all available commands
+make init-mac     # Full setup (installs Java, Python, Ollama, pulls model)
+make start        # Start Ollama and the app
+make stop         # Stop all services
+make dev          # Start in dev mode (auto-restart on code changes)
+make clean        # Clean build artifacts and database
 ```
 
-### 2. Install Java 17
+## Manual Setup
 
-```bash
-brew install openjdk@17
-```
+If you prefer to set things up manually or aren't on macOS:
 
-Add to your shell profile (`~/.zshrc` or `~/.bash_profile`):
+### 1. Install Dependencies
+
+- **Java 17**: `brew install openjdk@17`
+- **Python 3**: `brew install python@3.11`
+- **Ollama**: `brew install ollama`
+
+Add Java to your shell profile (`~/.zshrc`):
 
 ```bash
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
-Reload your shell:
+### 2. Setup Ollama
 
 ```bash
-source ~/.zshrc
+ollama serve                 # Start the service
+ollama pull qwen2.5:7b       # Pull the model (in another terminal)
 ```
 
-### 3. Install Python 3
-
-```bash
-brew install python@3.11
-```
-
-### 4. Install Ollama
-
-```bash
-brew install ollama
-```
-
-Start the Ollama service:
-
-```bash
-ollama serve
-```
-
-In a new terminal, pull the Qwen model (recommended for Japanese):
-
-```bash
-ollama pull qwen2.5:7b
-```
-
-### 5. Clone and Setup the Project
-
-```bash
-git clone <repository-url>
-cd jpy-wordbook
-```
-
-### 6. Setup Python Virtual Environment
+### 3. Setup Python Environment
 
 ```bash
 python3 -m venv .venv
@@ -83,31 +71,26 @@ source .venv/bin/activate
 pip install -r scripts/requirements.txt
 ```
 
-This installs:
-
-- `faster-whisper` - For speech-to-text in conversation mode
-- `edge-tts` - For text-to-speech audio generation
-
-### 7. Add Vocabulary Words
-
-Create or edit `known-words/*.csv` in the project root with your vocabulary:
-
-```csv
-japanese,romaji,english
-猫,neko,cat
-犬,inu,dog
-学校,gakkou,school
-```
-
-Note: The "english" column is used for word hints. The AI generates English translations for sentences.
-
-### 8. Run the Application
+### 4. Run the Application
 
 ```bash
 ./gradlew run
 ```
 
 The app will be available at: **http://localhost:8080**
+
+## Custom Vocabulary
+
+By default, the app uses built-in JLPT N5/N4 vocabulary. To add your own words, create CSV files in `known-words/`:
+
+```csv
+japanese;romaji;english
+猫;neko;cat
+犬;inu;dog
+学校;gakkou;school
+```
+
+Note: Fields are separated by semicolons (`;`).
 
 ## Usage
 
