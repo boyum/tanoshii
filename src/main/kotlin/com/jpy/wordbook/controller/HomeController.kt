@@ -16,7 +16,6 @@ class HomeController(
         return mapOf(
             "title" to "Tanoshii",
             "wordCount" to vocabularyService.getWordCount(),
-            "categories" to vocabularyService.getAllCategories()
         )
     }
 }

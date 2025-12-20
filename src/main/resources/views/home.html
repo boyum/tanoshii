@@ -7,43 +7,45 @@
 <main class="container home">
     <header class="header">
         <h1>Tanoshii</h1>
-        <p class="subtitle">Practice Japanese reading</p>
+        <p class="tagline">Learn Japanese, one sentence at a time</p>
+        <p class="tagline-jp">楽しく日本語を学ぼう</p>
     </header>
 
-    <section class="stats">
-        <div class="stat-card">
-            <span class="stat-number" th:text="${wordCount}">0</span>
-            <span class="stat-label">words loaded</span>
-        </div>
-    </section>
-
     <section class="start-section">
-        <h2>Start a session</h2>
-        <p>Choose difficulty:</p>
+        <h2><span class="icon">📖</span> Reading Practice</h2>
 
         <form hx-post="/api/session/start" hx-swap="none" class="difficulty-form">
             <div class="difficulty-options">
                 <label class="difficulty-option">
                     <input type="radio" name="difficulty" value="easy" checked>
                     <div class="difficulty-card">
-                        <span class="difficulty-name">Easy</span>
-                        <span class="difficulty-desc">10 short sentences</span>
+                        <span class="difficulty-icon">🌸</span>
+                        <div class="difficulty-info">
+                            <span class="difficulty-name">Easy</span>
+                            <span class="difficulty-desc">10 short sentences</span>
+                        </div>
                     </div>
                 </label>
 
                 <label class="difficulty-option">
                     <input type="radio" name="difficulty" value="medium">
                     <div class="difficulty-card">
-                        <span class="difficulty-name">Medium</span>
-                        <span class="difficulty-desc">5 sentences + 5 stories</span>
+                        <span class="difficulty-icon">🎋</span>
+                        <div class="difficulty-info">
+                            <span class="difficulty-name">Medium</span>
+                            <span class="difficulty-desc">5 sentences + 5 stories</span>
+                        </div>
                     </div>
                 </label>
 
                 <label class="difficulty-option">
                     <input type="radio" name="difficulty" value="hard">
                     <div class="difficulty-card">
-                        <span class="difficulty-name">Hard</span>
-                        <span class="difficulty-desc">10 longer sentences</span>
+                        <span class="difficulty-icon">🏯</span>
+                        <div class="difficulty-info">
+                            <span class="difficulty-name">Hard</span>
+                            <span class="difficulty-desc">10 longer sentences</span>
+                        </div>
                     </div>
                 </label>
             </div>
@@ -56,13 +58,14 @@
 
     <!-- Conversation mode -->
     <section class="conversation-section">
-        <a href="/conversation" class="btn btn-secondary btn-large conversation-link">
+        <h2><span class="icon">🎙️</span> Conversation</h2>
+        <p class="conversation-desc">Practice speaking Japanese with an AI partner</p>
+        <a href="/conversation" class="conversation-link">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                 <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V20h4v2H8v-2h4v-4.07z"/>
             </svg>
-            Conversation Practice
+            Start Conversation
         </a>
-        <p class="conversation-desc">Practice speaking Japanese with an AI partner</p>
     </section>
 
     <!-- Splash screen overlay -->
@@ -73,13 +76,6 @@
             <p class="splash-hint" id="splash-hint">Relax and have a cup of tea</p>
         </div>
     </div>
-
-    <section class="categories" th:if="${not #lists.isEmpty(categories)}">
-        <h3>Categories</h3>
-        <div class="category-chips">
-            <span class="chip" th:each="cat : ${categories}" th:text="${cat}"></span>
-        </div>
-    </section>
 
     <script>
         const loadingHints = [
