@@ -646,6 +646,20 @@ body:has(.home) {
   visibility: visible;
 }
 
+/* Hide tooltips when disabled */
+.japanese-container.tooltips-disabled .word-tooltip {
+  display: none !important;
+}
+
+/* Remove visual indicators when tooltips are disabled */
+.japanese-container.tooltips-disabled .word-token.has-meaning {
+  cursor: default;
+}
+
+.japanese-container.tooltips-disabled .word-token.has-meaning .word-surface {
+  text-decoration: none;
+}
+
 /* Japanese word surface */
 .word-surface {
   font-size: 1.5rem;

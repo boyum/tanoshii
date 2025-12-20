@@ -45,6 +45,15 @@
           <span class="toggle-indicator"></span>
           <span class="toggle-label">Show romaji</span>
         </button>
+        <button
+          type="button"
+          class="toggle-btn"
+          id="toggle-tooltips"
+          onclick="toggleTooltips(); event.stopPropagation();"
+        >
+          <span class="toggle-indicator"></span>
+          <span class="toggle-label">Show translations</span>
+        </button>
       </div>
 
       <!-- Japanese text with word-by-word romaji -->
@@ -227,17 +236,25 @@
         applyReadingAidSettings();
       }
 
+      function toggleTooltips() {
+        const enabled = localStorage.getItem("tooltipsEnabled") !== "false";
+        localStorage.setItem("tooltipsEnabled", !enabled);
+        applyReadingAidSettings();
+      }
+
       function applyReadingAidSettings() {
         const autoplayEnabled =
           localStorage.getItem("autoplayEnabled") !== "false";
         const furiganaEnabled =
           localStorage.getItem("furiganaEnabled") !== "false";
         const romajiEnabled = localStorage.getItem("romajiEnabled") !== "false";
+        const tooltipsEnabled = localStorage.getItem("tooltipsEnabled") !== "false";
 
         // Update toggle buttons
         const autoplayBtn = document.getElementById("toggle-autoplay");
         const furiganaBtn = document.getElementById("toggle-furigana");
         const romajiBtn = document.getElementById("toggle-romaji");
+        const tooltipsBtn = document.getElementById("toggle-tooltips");
 
         if (autoplayBtn) {
           autoplayBtn.classList.toggle("enabled", autoplayEnabled);
@@ -247,6 +264,9 @@
         }
         if (romajiBtn) {
           romajiBtn.classList.toggle("enabled", romajiEnabled);
+        }
+        if (tooltipsBtn) {
+          tooltipsBtn.classList.toggle("enabled", tooltipsEnabled);
         }
 
         // Toggle furigana vs plain text
@@ -262,6 +282,16 @@
         document.querySelectorAll(".word-romaji").forEach((el) => {
           el.style.display = romajiEnabled ? "inline" : "none";
         });
+
+        // Update tooltips visibility
+        const japaneseContainer = document.querySelector(".japanese-container");
+        if (japaneseContainer) {
+          if (tooltipsEnabled) {
+            japaneseContainer.classList.remove("tooltips-disabled");
+          } else {
+            japaneseContainer.classList.add("tooltips-disabled");
+          }
+        }
       }
 
       function autoPlayIfEnabled() {
