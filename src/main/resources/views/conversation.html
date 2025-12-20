@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(${title}, ~{::main})}">
+<head>
+    <title>Conversation - Tanoshii</title>
+</head>
+<body>
+<main class="container conversation">
+    <!-- Header with home link -->
+    <header class="conversation-header">
+        <a href="/" class="home-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            <span>Home</span>
+        </a>
+        <h1>Japanese Conversation</h1>
+    </header>
+
+    <!-- Scenario selector -->
+    <section class="scenario-section">
+        <label for="scenario-select">Choose a scenario:</label>
+        <select id="scenario-select" onchange="updateScenario()">
+            <option value="free">Free conversation</option>
+            <option value="restaurant">At a restaurant</option>
+            <option value="shopping">Shopping</option>
+            <option value="directions">Asking for directions</option>
+            <option value="hotel">At a hotel</option>
+            <option value="introduction">Self-introduction</option>
+        </select>
+    </section>
+
+    <!-- Conversation display -->
+    <section class="chat-container" id="chat-container">
+        <div class="chat-messages" id="chat-messages">
+            <div class="message assistant">
+                <div class="message-content">
+                    <p class="message-japanese">こんにちは！日本語で話しましょう。</p>
+                    <p class="message-english">Hello! Let's speak in Japanese.</p>
+                </div>
+                <button class="play-btn" onclick="playMessageAudio(this, 'こんにちは！日本語で話しましょう。')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recording controls -->
+    <section class="recording-section">
+        <div class="recording-status" id="recording-status">
+            <span class="status-text">Press and hold to speak</span>
+        </div>
+
+        <button class="record-btn" id="record-btn"
+                onpointerdown="startRecording()"
+                onpointerup="stopRecording()"
+                onpointerleave="stopRecording()"
+                ontouchstart="startRecording(); event.preventDefault();"
+                ontouchend="stopRecording(); event.preventDefault();">
+            <svg class="mic-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="32" height="32">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V20h4v2H8v-2h4v-4.07z"/>
+            </svg>
+            <svg class="recording-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="32" height="32" style="display:none;">
+                <circle cx="12" cy="12" r="8"/>
+            </svg>
+        </button>
+
+        <p class="recording-hint">Speak in Japanese - I'll respond!</p>
+    </section>
+
+    <!-- Loading overlay -->
+    <div class="processing-overlay" id="processing-overlay">
+        <div class="processing-content">
+            <div class="spinner"></div>
+            <p id="processing-text">Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let currentScenario = 'free';
+        let conversationId = null;
+
+        // Initialize conversation on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Start a new conversation
+            try {
+                const response = await fetch('/api/conversation/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scenario: currentScenario })
+                });
+                const data = await response.json();
+                conversationId = data.conversationId;
+            } catch (e) {
+                console.error('Failed to start conversation:', e);
+            }
+        });
+
+        function updateScenario() {
+            currentScenario = document.getElementById('scenario-select').value;
+            // Clear chat and start new conversation
+            document.getElementById('chat-messages').innerHTML = '';
+            startNewConversation();
+        }
+
+        async function startNewConversation() {
+            showProcessing('Starting new conversation...');
+            try {
+                const response = await fetch('/api/conversation/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scenario: currentScenario })
+                });
+                const data = await response.json();
+                conversationId = data.conversationId;
+
+                // Add greeting message
+                addMessage('assistant', data.greeting.japanese, data.greeting.english, data.greeting.audioHash);
+            } catch (e) {
+                console.error('Failed to start conversation:', e);
+            }
+            hideProcessing();
+        }
+
+        async function startRecording() {
+            if (isRecording) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    stream.getTracks().forEach(track => track.stop());
+                    await sendAudioToServer(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                updateRecordingUI(true);
+            } catch (e) {
+                console.error('Failed to start recording:', e);
+                alert('Could not access microphone. Please allow microphone access.');
+            }
+        }
+
+        function stopRecording() {
+            if (!isRecording || !mediaRecorder) return;
+
+            mediaRecorder.stop();
+            isRecording = false;
+            updateRecordingUI(false);
+        }
+
+        function updateRecordingUI(recording) {
+            const btn = document.getElementById('record-btn');
+            const status = document.getElementById('recording-status');
+            const micIcon = btn.querySelector('.mic-icon');
+            const recIcon = btn.querySelector('.recording-icon');
+
+            if (recording) {
+                btn.classList.add('recording');
+                status.querySelector('.status-text').textContent = 'Recording...';
+                status.classList.add('active');
+                micIcon.style.display = 'none';
+                recIcon.style.display = 'block';
+            } else {
+                btn.classList.remove('recording');
+                status.querySelector('.status-text').textContent = 'Press and hold to speak';
+                status.classList.remove('active');
+                micIcon.style.display = 'block';
+                recIcon.style.display = 'none';
+            }
+        }
+
+        async function sendAudioToServer(audioBlob) {
+            showProcessing('Transcribing...');
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            formData.append('conversationId', conversationId);
+
+            try {
+                const response = await fetch('/api/conversation/message', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to process audio');
+                }
+
+                const data = await response.json();
+
+                // Add user message
+                if (data.userText) {
+                    addMessage('user', data.userText, null, null);
+                }
+
+                // Add assistant response
+                if (data.response) {
+                    setProcessingText('Generating response...');
+                    addMessage('assistant', data.response.japanese, data.response.english, data.response.audioHash);
+
+                    // Auto-play response
+                    if (data.response.audioHash) {
+                        playAudio(data.response.audioHash);
+                    }
+                }
+            } catch (e) {
+                console.error('Error sending audio:', e);
+                addMessage('system', 'Error processing your message. Please try again.', null, null);
+            }
+
+            hideProcessing();
+        }
+
+        function addMessage(role, japanese, english, audioHash) {
+            const container = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            let content = `<div class="message-content">`;
+            if (japanese) {
+                content += `<p class="message-japanese">${escapeHtml(japanese)}</p>`;
+            }
+            if (english) {
+                content += `<p class="message-english">${escapeHtml(english)}</p>`;
+            }
+            content += `</div>`;
+
+            if (audioHash && role === 'assistant') {
+                content += `
+                    <button class="play-btn" onclick="playAudio('${audioHash}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </button>
+                `;
+            }
+
+            messageDiv.innerHTML = content;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function playAudio(audioHash) {
+            const audio = new Audio(`/audio/${audioHash}.mp3`);
+            audio.play().catch(e => console.error('Audio playback failed:', e));
+        }
+
+        function playMessageAudio(button, text) {
+            // For the initial greeting, generate audio on demand
+            fetch('/api/conversation/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.audioHash) {
+                    playAudio(data.audioHash);
+                }
+            })
+            .catch(e => console.error('TTS failed:', e));
+        }
+
+        function showProcessing(text) {
+            document.getElementById('processing-text').textContent = text || 'Processing...';
+            document.getElementById('processing-overlay').classList.add('visible');
+        }
+
+        function setProcessingText(text) {
+            document.getElementById('processing-text').textContent = text;
+        }
+
+        function hideProcessing() {
+            document.getElementById('processing-overlay').classList.remove('visible');
+        }
+    </script>
+</main>
+</body>
+</html>

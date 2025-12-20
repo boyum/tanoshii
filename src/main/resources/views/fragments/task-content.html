@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="task-content" class="task-content" th:data-task-index="${taskIndex}">
+    <div class="task-badge" th:classappend="${task.taskType.name().toLowerCase()}">
+        <span th:text="${task.taskType.name() == 'STORY' ? 'Story' : 'Sentence'}">Sentence</span>
+    </div>
+
+    <!-- Reading aid toggles -->
+    <div class="reading-toggles">
+        <button type="button" class="toggle-btn" id="toggle-autoplay" onclick="toggleAutoplay(); event.stopPropagation();">
+            <span class="toggle-indicator"></span>
+            <span class="toggle-label">Auto-play audio</span>
+        </button>
+        <button type="button" class="toggle-btn" id="toggle-furigana" onclick="toggleFurigana(); event.stopPropagation();">
+            <span class="toggle-indicator"></span>
+            <span class="toggle-label">Furigana</span>
+        </button>
+        <button type="button" class="toggle-btn" id="toggle-romaji" onclick="toggleRomaji(); event.stopPropagation();">
+            <span class="toggle-indicator"></span>
+            <span class="toggle-label">Romaji</span>
+        </button>
+    </div>
+
+    <!-- Japanese text with furigana -->
+    <div class="japanese-container">
+        <!-- Furigana version (with ruby tags) - shown when furigana enabled and available -->
+        <div class="japanese-text furigana-text" th:if="${task.furiganaText != null}" th:utext="${task.furiganaText}">
+            Japanese with ruby
+        </div>
+        <!-- Plain version - shown when furigana disabled or not available -->
+        <div class="japanese-text plain-text" th:text="${task.japaneseText}">
+            Japanese text here
+        </div>
+
+        <!-- Romaji text below -->
+        <div class="romaji-text" th:if="${task.romajiText != null}" th:text="${task.romajiText}">
+            Romaji text
+        </div>
+    </div>
+
+    <!-- Audio play/pause button -->
+    <button class="audio-btn"
+            id="audio-play-btn"
+            th:if="${task.audioHash != null}"
+            th:data-audio-hash="${task.audioHash}"
+            onclick="toggleAudioPlayback(this);">
+        <svg class="icon-play" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M8 5v14l11-7z"/>
+        </svg>
+        <svg class="icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24" style="display:none;">
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        </svg>
+    </button>
+
+    <!-- Translation area (initially hidden) -->
+    <div id="translation-area" class="translation-area">
+        <!-- Will be filled by reveal action -->
+    </div>
+
+    <!-- Vocabulary hints -->
+    <div class="vocabulary-hints" th:if="${not #lists.isEmpty(words)}">
+        <span class="hint-label">Words used:</span>
+        <div class="word-chips">
+            <span class="word-chip" th:each="word : ${words}">
+                <span class="word-jp" th:text="${word.japanese}">Japanese</span>
+                <span class="word-en" th:text="${word.english}">English</span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global audio instance for play/pause control (avoid redeclaration on HTMX swap)
+    if (typeof currentAudio === 'undefined') {
+        var currentAudio = null;
+        var isPlaying = false;
+    }
+
+    function toggleAudioPlayback(button) {
+        const hash = button.dataset.audioHash;
+        if (!hash) return;
+
+        if (isPlaying && currentAudio) {
+            // Pause
+            currentAudio.pause();
+            setPlayingState(false);
+        } else {
+            // Play (or resume)
+            if (currentAudio && currentAudio.src.includes(hash)) {
+                // Resume existing audio
+                currentAudio.play().catch(e => console.error('Audio playback failed:', e));
+            } else {
+                // Create new audio
+                playAudioByHash(hash);
+            }
+        }
+    }
+
+    function playAudioByHash(hash) {
+        // Stop any existing audio
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+        }
+
+        currentAudio = new Audio(`/audio/${hash}.mp3`);
+        currentAudio.addEventListener('ended', () => setPlayingState(false));
+        currentAudio.addEventListener('pause', () => setPlayingState(false));
+        currentAudio.addEventListener('play', () => setPlayingState(true));
+        currentAudio.play().catch(e => {
+            console.error('Audio playback failed:', e);
+            setPlayingState(false);
+        });
+    }
+
+    function setPlayingState(playing) {
+        isPlaying = playing;
+        const btn = document.getElementById('audio-play-btn');
+        if (btn) {
+            const playIcon = btn.querySelector('.icon-play');
+            const pauseIcon = btn.querySelector('.icon-pause');
+            if (playIcon) playIcon.style.display = playing ? 'none' : 'block';
+            if (pauseIcon) pauseIcon.style.display = playing ? 'block' : 'none';
+        }
+    }
+
+    function toggleAutoplay() {
+        const enabled = localStorage.getItem('autoplayEnabled') !== 'false';
+        localStorage.setItem('autoplayEnabled', !enabled);
+        applyReadingAidSettings();
+    }
+
+    function toggleFurigana() {
+        const enabled = localStorage.getItem('furiganaEnabled') !== 'false';
+        localStorage.setItem('furiganaEnabled', !enabled);
+        applyReadingAidSettings();
+    }
+
+    function toggleRomaji() {
+        const enabled = localStorage.getItem('romajiEnabled') !== 'false';
+        localStorage.setItem('romajiEnabled', !enabled);
+        applyReadingAidSettings();
+    }
+
+    function applyReadingAidSettings() {
+        const autoplayEnabled = localStorage.getItem('autoplayEnabled') !== 'false';
+        const furiganaEnabled = localStorage.getItem('furiganaEnabled') !== 'false';
+        const romajiEnabled = localStorage.getItem('romajiEnabled') !== 'false';
+
+        // Update toggle buttons
+        const autoplayBtn = document.getElementById('toggle-autoplay');
+        const furiganaBtn = document.getElementById('toggle-furigana');
+        const romajiBtn = document.getElementById('toggle-romaji');
+
+        if (autoplayBtn) {
+            autoplayBtn.classList.toggle('enabled', autoplayEnabled);
+        }
+        if (furiganaBtn) {
+            furiganaBtn.classList.toggle('enabled', furiganaEnabled);
+        }
+        if (romajiBtn) {
+            romajiBtn.classList.toggle('enabled', romajiEnabled);
+        }
+
+        // Update text visibility
+        // Check if furigana is available (element exists in DOM)
+        const furiganaTexts = document.querySelectorAll('.furigana-text');
+        const hasFurigana = furiganaTexts.length > 0;
+
+        furiganaTexts.forEach(el => {
+            el.style.display = furiganaEnabled ? 'block' : 'none';
+        });
+        document.querySelectorAll('.plain-text').forEach(el => {
+            // Show plain text if furigana is disabled OR if furigana is not available
+            el.style.display = (!furiganaEnabled || !hasFurigana) ? 'block' : 'none';
+        });
+        document.querySelectorAll('.romaji-text').forEach(el => {
+            el.style.display = romajiEnabled ? 'block' : 'none';
+        });
+    }
+
+    function autoPlayIfEnabled() {
+        const autoplayEnabled = localStorage.getItem('autoplayEnabled') !== 'false';
+        if (autoplayEnabled) {
+            const audioBtn = document.querySelector('.audio-btn[data-audio-hash]');
+            if (audioBtn) {
+                const hash = audioBtn.dataset.audioHash;
+                // Small delay to ensure the UI has rendered
+                setTimeout(() => playAudioByHash(hash), 100);
+            }
+        }
+    }
+
+    // Apply settings on load
+    applyReadingAidSettings();
+    // Auto-play audio if enabled
+    autoPlayIfEnabled();
+</script>
+</body>
+</html>

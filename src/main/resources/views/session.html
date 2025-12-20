@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(${title}, ~{::main})}">
+<head>
+    <title>Session - Tanoshii</title>
+</head>
+<body>
+<main class="container session" th:if="${session != null}">
+    <!-- Session header with home link -->
+    <header class="session-header">
+        <a href="/" class="home-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            </svg>
+            <span>Home</span>
+        </a>
+    </header>
+
+    <!-- Progress bar -->
+    <div class="progress-bar">
+        <div class="progress-text">
+            <span th:text="${currentIndex + 1}">1</span> / <span th:text="${totalTasks}">10</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" th:style="|width: ${(currentIndex + 1) * 100 / totalTasks}%|"></div>
+        </div>
+    </div>
+
+    <!-- Task container -->
+    <div id="task-container"
+         th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex})}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading task...</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="task-nav" id="nav-controls">
+        <button id="btn-back"
+                class="btn btn-secondary"
+                th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex - 1})}"
+                hx-target="#task-container"
+                hx-swap="innerHTML"
+                th:disabled="${currentIndex == 0}"
+                onpointerdown="this.classList.add('pressed');"
+                onpointerup="this.classList.remove('pressed');">
+            Back
+        </button>
+
+        <button id="btn-reveal"
+                class="btn btn-primary"
+                th:hx-post="@{/api/session/{id}/task/{index}/reveal(id=${session.id}, index=${currentIndex})}"
+                hx-target="#translation-area"
+                hx-swap="innerHTML"
+                onpointerdown="this.classList.add('pressed');">
+            Show Translation
+        </button>
+
+        <button id="btn-next"
+                class="btn btn-secondary"
+                th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex + 1})}"
+                hx-target="#task-container"
+                hx-swap="innerHTML"
+                th:disabled="${currentIndex >= totalTasks - 1}"
+                onpointerdown="this.classList.add('pressed');"
+                onpointerup="this.classList.remove('pressed');">
+            Next
+        </button>
+    </nav>
+
+    <script th:inline="javascript">
+        const sessionId = /*[[${session.id}]]*/ '';
+        let currentIndex = /*[[${currentIndex}]]*/ 0;
+        const totalTasks = /*[[${totalTasks}]]*/ 10;
+
+        // Ensure HTMX processes buttons on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            htmx.process(document.getElementById('nav-controls'));
+        });
+
+        // Clear translation when starting to load new task
+        document.body.addEventListener('htmx:beforeRequest', function(event) {
+            if (event.detail.target.id === 'task-container') {
+                // Clear the translation area when navigating to a new task
+                const translationArea = document.getElementById('translation-area');
+                if (translationArea) {
+                    translationArea.innerHTML = '';
+                }
+                // Stop any playing audio
+                if (typeof currentAudio !== 'undefined' && currentAudio) {
+                    currentAudio.pause();
+                    currentAudio = null;
+                }
+                if (typeof setPlayingState === 'function') {
+                    setPlayingState(false);
+                }
+            }
+        });
+
+        // Update navigation buttons after HTMX swaps
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'task-container') {
+                // Extract new index from the loaded content
+                const taskContent = event.detail.target.querySelector('[data-task-index]');
+                if (taskContent) {
+                    currentIndex = parseInt(taskContent.dataset.taskIndex, 10);
+                    updateNavButtons();
+                    updateProgressBar();
+                    // Apply reading aid settings after loading new task
+                    if (typeof applyReadingAidSettings === 'function') {
+                        applyReadingAidSettings();
+                    }
+                    // Auto-play audio if enabled
+                    if (typeof autoPlayIfEnabled === 'function') {
+                        autoPlayIfEnabled();
+                    }
+                }
+            }
+        });
+
+        function updateNavButtons() {
+            const backBtn = document.getElementById('btn-back');
+            const nextBtn = document.getElementById('btn-next');
+            const revealBtn = document.getElementById('btn-reveal');
+
+            if (backBtn) {
+                backBtn.disabled = currentIndex === 0;
+                backBtn.setAttribute('hx-get', `/api/session/${sessionId}/task/${currentIndex - 1}`);
+                htmx.process(backBtn);
+            }
+            if (nextBtn) {
+                nextBtn.disabled = currentIndex >= totalTasks - 1;
+                nextBtn.setAttribute('hx-get', `/api/session/${sessionId}/task/${currentIndex + 1}`);
+                htmx.process(nextBtn);
+            }
+            if (revealBtn) {
+                revealBtn.setAttribute('hx-post', `/api/session/${sessionId}/task/${currentIndex}/reveal`);
+                htmx.process(revealBtn);
+            }
+        }
+
+        function updateProgressBar() {
+            const progressFill = document.querySelector('.progress-fill');
+            const progressText = document.querySelector('.progress-text');
+            if (progressFill) {
+                progressFill.style.width = ((currentIndex + 1) * 100 / totalTasks) + '%';
+            }
+            if (progressText) {
+                progressText.innerHTML = `${currentIndex + 1} / ${totalTasks}`;
+            }
+        }
+    </script>
+</main>
+
+<main class="container error" th:if="${session == null}">
+    <h1>Session not found</h1>
+    <p>The session you're looking for doesn't exist.</p>
+    <a href="/" class="btn btn-primary">Go to home</a>
+</main>
+</body>
+</html>

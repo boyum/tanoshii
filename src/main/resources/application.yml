@@ -1,0 +1,41 @@
+micronaut:
+  application:
+    name: tanoshii
+  server:
+    port: 8080
+  router:
+    static-resources:
+      default:
+        enabled: true
+        mapping: /static/**
+        paths:
+          - file:src/main/resources/static
+          - classpath:static
+  http:
+    client:
+      read-timeout: 120s
+      connect-timeout: 10s
+
+# Thymeleaf: disable cache for development (instant template reload)
+thymeleaf:
+  cache: false
+
+datasources:
+  default:
+    url: jdbc:sqlite:${user.dir}/database.sqlite
+    driver-class-name: org.sqlite.JDBC
+    dialect: SQLITE
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+
+ollama:
+  base-url: http://localhost:11434
+  model: qwen2.5
+
+audio:
+  cache-dir: audio-cache
+  voice: ja-JP-NanamiNeural

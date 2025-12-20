@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(${title}, ~{::main})}">
+<head>
+    <title>Tanoshii</title>
+</head>
+<body>
+<main class="container home">
+    <header class="header">
+        <h1>Tanoshii</h1>
+        <p class="subtitle">Practice Japanese reading</p>
+    </header>
+
+    <section class="stats">
+        <div class="stat-card">
+            <span class="stat-number" th:text="${wordCount}">0</span>
+            <span class="stat-label">words loaded</span>
+        </div>
+    </section>
+
+    <section class="start-section">
+        <h2>Start a session</h2>
+        <p>Choose difficulty:</p>
+
+        <form hx-post="/api/session/start" hx-swap="none" class="difficulty-form">
+            <div class="difficulty-options">
+                <label class="difficulty-option">
+                    <input type="radio" name="difficulty" value="easy" checked>
+                    <div class="difficulty-card">
+                        <span class="difficulty-name">Easy</span>
+                        <span class="difficulty-desc">10 short sentences</span>
+                    </div>
+                </label>
+
+                <label class="difficulty-option">
+                    <input type="radio" name="difficulty" value="medium">
+                    <div class="difficulty-card">
+                        <span class="difficulty-name">Medium</span>
+                        <span class="difficulty-desc">5 sentences + 5 stories</span>
+                    </div>
+                </label>
+
+                <label class="difficulty-option">
+                    <input type="radio" name="difficulty" value="hard">
+                    <div class="difficulty-card">
+                        <span class="difficulty-name">Hard</span>
+                        <span class="difficulty-desc">10 longer sentences</span>
+                    </div>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-large" onclick="showSplash()">
+                Start Session
+            </button>
+        </form>
+    </section>
+
+    <!-- Conversation mode -->
+    <section class="conversation-section">
+        <a href="/conversation" class="btn btn-secondary btn-large conversation-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V20h4v2H8v-2h4v-4.07z"/>
+            </svg>
+            Conversation Practice
+        </a>
+        <p class="conversation-desc">Practice speaking Japanese with an AI partner</p>
+    </section>
+
+    <!-- Splash screen overlay -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-spinner"></div>
+            <p class="splash-text" id="splash-text">Preparing sentences...</p>
+            <p class="splash-hint" id="splash-hint">Relax and have a cup of tea</p>
+        </div>
+    </div>
+
+    <section class="categories" th:if="${not #lists.isEmpty(categories)}">
+        <h3>Categories</h3>
+        <div class="category-chips">
+            <span class="chip" th:each="cat : ${categories}" th:text="${cat}"></span>
+        </div>
+    </section>
+
+    <script>
+        const loadingHints = [
+            "Finding the best words...",
+            "Consulting with sensei...",
+            "Folding origami while you wait...",
+            "Practicing calligraphy...",
+            "Counting sakura blossoms...",
+            "Meditating on kanji...",
+            "Gathering wisdom from the mountain...",
+            "Brewing matcha tea...",
+            "Waiting for the rice noodles to cook...",
+            "Reading manga for inspiration...",
+            "Practicing with chopsticks...",
+            "Watching sunrise over Fuji...",
+            "Listening to the sound of bamboo...",
+            "Arranging the zen garden...",
+        ];
+
+        let splashTimeout = null;
+        let hintInterval = null;
+
+        function showSplash() {
+            // Only show splash after 200ms delay
+            splashTimeout = setTimeout(() => {
+                document.getElementById('splash-screen').classList.add('visible');
+                rotateHints();
+                hintInterval = setInterval(rotateHints, 3000);
+            }, 200);
+        }
+
+        function rotateHints() {
+            const hintEl = document.getElementById('splash-hint');
+            const randomHint = loadingHints[Math.floor(Math.random() * loadingHints.length)];
+            hintEl.style.opacity = '0';
+            setTimeout(() => {
+                hintEl.textContent = randomHint;
+                hintEl.style.opacity = '1';
+            }, 300);
+        }
+
+        // Clean up if page navigates away
+        window.addEventListener('beforeunload', () => {
+            if (splashTimeout) clearTimeout(splashTimeout);
+            if (hintInterval) clearInterval(hintInterval);
+        });
+    </script>
+</main>
+</body>
+</html>

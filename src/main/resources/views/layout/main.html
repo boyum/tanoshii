@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(pageTitle, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle}">Tanoshii</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" th:href="@{/static/css/styles.css}">
+</head>
+<body>
+    <main th:replace="${content}">
+    </main>
+    <script>
+        // Add visual feedback for buttons on pointer down
+        document.addEventListener('pointerdown', function(e) {
+            if (e.target.matches('button, .btn')) {
+                e.target.classList.add('active');
+            }
+        });
+        document.addEventListener('pointerup', function(e) {
+            document.querySelectorAll('button.active, .btn.active').forEach(function(el) {
+                el.classList.remove('active');
+            });
+        });
+        document.addEventListener('pointercancel', function(e) {
+            document.querySelectorAll('button.active, .btn.active').forEach(function(el) {
+                el.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
