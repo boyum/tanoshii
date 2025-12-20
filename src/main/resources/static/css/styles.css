@@ -339,6 +339,22 @@ body:has(.home) {
   margin-bottom: 8px;
 }
 
+.generating-indicator {
+  color: var(--primary);
+  font-style: italic;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .progress-track {
   height: 6px;
   background: var(--border);
@@ -587,6 +603,111 @@ body:has(.home) {
   font-size: 0.75rem;
 }
 
+/* Answer section */
+.answer-section {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--accent-cool);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.answer-label {
+  display: block;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface);
+  resize: vertical;
+  transition: border-color 200ms;
+}
+
+.answer-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.check-answer-btn {
+  margin-top: 12px;
+}
+
+/* Feedback area */
+.feedback-area {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid;
+
+  &:has(.feedback-correct) {
+    background-color: #e8f5e9;
+    border-color: var(--success);
+    color: #2e7d32;
+  }
+
+  &:has(.feedback-incorrect) {
+    background-color: #fff3e0;
+    border-color: var(--danger);
+    color: #d32f2f;
+  }
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feedback-icon {
+  flex-shrink: 0;
+}
+
+.feedback-status {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.feedback-text {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.feedback-suggestion {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  font-style: italic;
+}
+
+.feedback-error {
+  color: #d32f2f;
+}
+
+/* Dark mode feedback */
+[data-theme="dark"] .feedback-correct {
+  background: #1b5e20;
+  border-color: #4caf50;
+  color: #a5d6a7;
+}
+
+[data-theme="dark"] .feedback-incorrect {
+  background: #e65100;
+  border-color: #ff9800;
+  color: #ffcc80;
+}
+
 /* Navigation */
 .task-nav {
   position: fixed;
@@ -631,10 +752,6 @@ body:has(.home) {
 
 /* Responsive adjustments */
 @media (min-width: 640px) {
-  .container {
-    padding: 24px;
-  }
-
   .home h1 {
     font-size: 3rem;
   }

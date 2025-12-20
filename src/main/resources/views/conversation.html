@@ -32,17 +32,7 @@
     <!-- Conversation display -->
     <section class="chat-container" id="chat-container">
         <div class="chat-messages" id="chat-messages">
-            <div class="message assistant">
-                <div class="message-content">
-                    <p class="message-japanese">こんにちは！日本語で話しましょう。</p>
-                    <p class="message-english">Hello! Let's speak in Japanese.</p>
-                </div>
-                <button class="play-btn" onclick="playMessageAudio(this, 'こんにちは！日本語で話しましょう。')">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </button>
-            </div>
+            <!-- Messages will be added dynamically -->
         </div>
     </section>
 
@@ -86,18 +76,7 @@
 
         // Initialize conversation on page load
         document.addEventListener('DOMContentLoaded', async function() {
-            // Start a new conversation
-            try {
-                const response = await fetch('/api/conversation/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ scenario: currentScenario })
-                });
-                const data = await response.json();
-                conversationId = data.conversationId;
-            } catch (e) {
-                console.error('Failed to start conversation:', e);
-            }
+            await startNewConversation();
         });
 
         function updateScenario() {
@@ -120,6 +99,11 @@
 
                 // Add greeting message
                 addMessage('assistant', data.greeting.japanese, data.greeting.english, data.greeting.audioHash);
+
+                // Auto-play greeting
+                if (data.greeting.audioHash) {
+                    playAudio(data.greeting.audioHash);
+                }
             } catch (e) {
                 console.error('Failed to start conversation:', e);
             }
@@ -262,22 +246,6 @@
         function playAudio(audioHash) {
             const audio = new Audio(`/audio/${audioHash}.mp3`);
             audio.play().catch(e => console.error('Audio playback failed:', e));
-        }
-
-        function playMessageAudio(button, text) {
-            // For the initial greeting, generate audio on demand
-            fetch('/api/conversation/tts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.audioHash) {
-                    playAudio(data.audioHash);
-                }
-            })
-            .catch(e => console.error('TTS failed:', e));
         }
 
         function showProcessing(text) {

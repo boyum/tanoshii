@@ -4,6 +4,7 @@ import com.jpy.wordbook.model.*
 import com.jpy.wordbook.repository.TaskRepository
 import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 
 @Singleton
 class TaskGeneratorService(
@@ -15,37 +16,86 @@ class TaskGeneratorService(
 ) {
     private val logger = LoggerFactory.getLogger(TaskGeneratorService::class.java)
 
+    // Track total expected tasks per session for progress reporting
+    private val sessionTotalTasks = ConcurrentHashMap<String, Int>()
+
+    fun getTotalTasksForSession(sessionId: String): Int {
+        return sessionTotalTasks[sessionId] ?: 0
+    }
+
+    fun getGeneratedTaskCount(sessionId: String): Int {
+        return taskRepository.countBySessionId(sessionId)
+    }
+
+    /**
+     * Generate the first task for a session and return immediately.
+     * Call generateRemainingTasks() afterwards in a background thread.
+     */
+    fun generateFirstTask(session: Session): Task {
+        logger.info("Generating first task for session ${session.id}")
+
+        val taskConfigs = getTaskConfigsForDifficulty(session.difficulty)
+        sessionTotalTasks[session.id] = taskConfigs.size
+
+        val config = taskConfigs.first()
+        return generateSingleTask(session, 0, config)
+    }
+
+    /**
+     * Generate remaining tasks (index 1 onwards) for a session.
+     * Should be called in a background thread after generateFirstTask.
+     */
+    fun generateRemainingTasks(session: Session) {
+        logger.info("Generating remaining tasks for session ${session.id}")
+
+        val taskConfigs = getTaskConfigsForDifficulty(session.difficulty)
+
+        for ((index, config) in taskConfigs.withIndex()) {
+            if (index == 0) continue // Skip first task, already generated
+
+            generateSingleTask(session, index, config)
+            logger.info("Generated task ${index + 1}/${taskConfigs.size} for session ${session.id}")
+        }
+
+        logger.info("Completed all tasks for session ${session.id}")
+    }
+
+    private fun generateSingleTask(session: Session, index: Int, config: TaskConfig): Task {
+        val words = vocabularyService.getRandomWords(config.wordCount)
+        val content = generateContent(words, config.type, session.difficulty)
+
+        // Generate furigana and romaji using Kuromoji
+        val furigana = japaneseTextService.toFurigana(content.japanese)
+        val romaji = japaneseTextService.toRomaji(content.japanese)
+
+        // Generate audio for this task
+        val audioHash = audioService.getOrGenerateAudio(content.japanese)
+
+        val task = Task(
+            sessionId = session.id,
+            taskIndex = index,
+            taskType = config.type,
+            japaneseText = content.japanese,
+            englishTranslation = content.english,
+            wordIds = words.mapNotNull { it.id },
+            audioHash = audioHash,
+            furiganaText = furigana,
+            romajiText = romaji
+        )
+
+        return taskRepository.save(task)
+    }
+
     fun generateTasksForSession(session: Session): List<Task> {
         logger.info("Generating tasks for session ${session.id} with difficulty ${session.difficulty}")
 
         val taskConfigs = getTaskConfigsForDifficulty(session.difficulty)
+        sessionTotalTasks[session.id] = taskConfigs.size
         val tasks = mutableListOf<Task>()
 
         for ((index, config) in taskConfigs.withIndex()) {
-            val words = vocabularyService.getRandomWords(config.wordCount)
-            val content = generateContent(words, config.type, session.difficulty)
-
-            // Generate furigana and romaji using Kuromoji
-            val furigana = japaneseTextService.toFurigana(content.japanese)
-            val romaji = japaneseTextService.toRomaji(content.japanese)
-
-            // Generate audio for this task
-            val audioHash = audioService.getOrGenerateAudio(content.japanese)
-
-            val task = Task(
-                sessionId = session.id,
-                taskIndex = index,
-                taskType = config.type,
-                japaneseText = content.japanese,
-                englishTranslation = content.english,
-                wordIds = words.mapNotNull { it.id },
-                audioHash = audioHash,
-                furiganaText = furigana,
-                romajiText = romaji
-            )
-
-            val savedTask = taskRepository.save(task)
-            tasks.add(savedTask)
+            val task = generateSingleTask(session, index, config)
+            tasks.add(task)
             logger.info("Generated task ${index + 1}/${taskConfigs.size} for session ${session.id}")
         }
 

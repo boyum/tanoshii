@@ -18,7 +18,10 @@
     <!-- Progress bar -->
     <div class="progress-bar">
         <div class="progress-text">
-            <span th:text="${currentIndex + 1}">1</span> / <span th:text="${totalTasks}">10</span>
+            <span id="current-position" th:text="${currentIndex + 1}">1</span> / <span id="total-tasks" th:text="${totalTasks}">10</span>
+            <span id="generating-indicator" class="generating-indicator" style="display: none;">
+                (generating <span id="generated-count">1</span>/<span id="expected-count">10</span>)
+            </span>
         </div>
         <div class="progress-track">
             <div class="progress-fill" th:style="|width: ${(currentIndex + 1) * 100 / totalTasks}%|"></div>
@@ -73,12 +76,60 @@
     <script th:inline="javascript">
         const sessionId = /*[[${session.id}]]*/ '';
         let currentIndex = /*[[${currentIndex}]]*/ 0;
-        const totalTasks = /*[[${totalTasks}]]*/ 10;
+        let totalTasks = /*[[${totalTasks}]]*/ 10;
+        let generatedTasks = 1; // At least first task is ready
+        let generationComplete = false;
+        let statusPollInterval = null;
 
         // Ensure HTMX processes buttons on page load
         document.addEventListener('DOMContentLoaded', function() {
             htmx.process(document.getElementById('nav-controls'));
+            // Start polling for generation status
+            pollGenerationStatus();
         });
+
+        async function pollGenerationStatus() {
+            if (generationComplete) return;
+
+            try {
+                const response = await fetch(`/api/session/${sessionId}/status`);
+                const status = await response.json();
+
+                generatedTasks = status.generated;
+                totalTasks = status.total || totalTasks;
+                generationComplete = status.complete;
+
+                // Update UI
+                updateGenerationIndicator();
+                updateNavButtons();
+
+                // Continue polling if not complete
+                if (!generationComplete) {
+                    statusPollInterval = setTimeout(pollGenerationStatus, 1000);
+                }
+            } catch (e) {
+                console.error('Failed to poll status:', e);
+                // Retry after delay
+                statusPollInterval = setTimeout(pollGenerationStatus, 2000);
+            }
+        }
+
+        function updateGenerationIndicator() {
+            const indicator = document.getElementById('generating-indicator');
+            const generatedCount = document.getElementById('generated-count');
+            const expectedCount = document.getElementById('expected-count');
+            const totalEl = document.getElementById('total-tasks');
+
+            if (generationComplete) {
+                if (indicator) indicator.style.display = 'none';
+            } else {
+                if (indicator) indicator.style.display = 'inline';
+                if (generatedCount) generatedCount.textContent = generatedTasks;
+                if (expectedCount) expectedCount.textContent = totalTasks;
+            }
+
+            if (totalEl) totalEl.textContent = totalTasks;
+        }
 
         // Clear translation when starting to load new task
         document.body.addEventListener('htmx:beforeRequest', function(event) {
@@ -131,7 +182,18 @@
                 htmx.process(backBtn);
             }
             if (nextBtn) {
-                nextBtn.disabled = currentIndex >= totalTasks - 1;
+                // Disable if at end OR if next task not yet generated
+                const nextTaskReady = (currentIndex + 1) < generatedTasks;
+                const atEnd = currentIndex >= totalTasks - 1;
+                nextBtn.disabled = atEnd || !nextTaskReady;
+
+                // Show generating hint if waiting
+                if (!atEnd && !nextTaskReady) {
+                    nextBtn.textContent = 'Generating...';
+                } else {
+                    nextBtn.textContent = 'Next';
+                }
+
                 nextBtn.setAttribute('hx-get', `/api/session/${sessionId}/task/${currentIndex + 1}`);
                 htmx.process(nextBtn);
             }
@@ -143,12 +205,17 @@
 
         function updateProgressBar() {
             const progressFill = document.querySelector('.progress-fill');
-            const progressText = document.querySelector('.progress-text');
+            const currentPos = document.getElementById('current-position');
+            const totalEl = document.getElementById('total-tasks');
+
             if (progressFill) {
                 progressFill.style.width = ((currentIndex + 1) * 100 / totalTasks) + '%';
             }
-            if (progressText) {
-                progressText.innerHTML = `${currentIndex + 1} / ${totalTasks}`;
+            if (currentPos) {
+                currentPos.textContent = currentIndex + 1;
+            }
+            if (totalEl) {
+                totalEl.textContent = totalTasks;
             }
         }
     </script>

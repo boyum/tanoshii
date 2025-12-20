@@ -27,9 +27,11 @@ class JapaneseTextService {
      */
     fun toRomaji(text: String): String {
         val tokens = tokenizer.tokenize(text)
-        return tokens.joinToString(" ") { token ->
+        val result = StringBuilder()
+
+        for ((index, token) in tokens.withIndex()) {
             val reading = token.reading
-            when {
+            var romaji = when {
                 // If reading is null, empty, or "*", use the surface form
                 reading == null || reading == "*" || reading.isEmpty() -> {
                     // If surface is already latin, keep it as-is
@@ -42,14 +44,65 @@ class JapaneseTextService {
                 }
                 else -> katakanaToRomaji(reading)
             }
-        }.replace("  ", " ")  // Clean up double spaces
-         .replace(" .", ".")
-         .replace(" ,", ",")
-         .replace(" ?", "?")
-         .replace(" !", "!")
-         .replace(" -", "-")
-         .replace("- ", "-")
-         .trim()
+
+            // Handle small kana combinations across token boundaries
+            // If this token starts with a small kana vowel (ya, yu, yo) and previous ends with consonant
+            if (index > 0 && result.isNotEmpty() && romaji.isNotEmpty()) {
+                val surface = token.surface
+                if (surface.isNotEmpty() && isSmallYKana(surface[0])) {
+                    val lastChar = result.last()
+                    // If previous token ended with 'i' from shi, chi, ni, hi, etc.
+                    // we need to combine: shi + yo = sho, chi + yo = cho, etc.
+                    if (lastChar == 'i') {
+                        result.deleteCharAt(result.length - 1)
+                        // Convert ya/yu/yo to a/u/o for combination
+                        romaji = when (romaji.firstOrNull()) {
+                            'y' -> romaji.drop(1) // ya->a, yu->u, yo->o
+                            else -> romaji
+                        }
+                    }
+                }
+            }
+
+            // Decide whether to add a space before this token
+            if (index > 0 && romaji.isNotEmpty()) {
+                val surface = token.surface
+                // Don't add space if this is a small kana (combining with previous)
+                val isSmallKana = surface.isNotEmpty() && isSmallYKana(surface[0])
+
+                if (!isSmallKana) {
+                    val pos = token.partOfSpeechLevel1 ?: ""
+                    val prevToken = tokens[index - 1]
+                    val prevPos = prevToken.partOfSpeechLevel1 ?: ""
+
+                    // Add space before content words (nouns, verbs, adjectives, adverbs)
+                    // Don't add space before/after particles and auxiliary elements
+                    val isContentWord = pos in listOf("名詞", "動詞", "形容詞", "副詞", "接続詞", "感動詞")
+                    val prevWasParticle = prevPos in listOf("助詞", "助動詞")
+                    val isParticle = pos in listOf("助詞", "助動詞", "記号")
+
+                    if (isContentWord || (prevWasParticle && !isParticle)) {
+                        result.append(" ")
+                    }
+                }
+            }
+
+            result.append(romaji)
+        }
+
+        return result.toString()
+            .replace("  ", " ")  // Clean up double spaces
+            .replace(" .", ".")
+            .replace(" ,", ",")
+            .replace(" ?", "?")
+            .replace(" !", "!")
+            .replace(" -", "-")
+            .replace("- ", "-")
+            .trim()
+    }
+
+    private fun isSmallYKana(char: Char): Boolean {
+        return char in listOf('ゃ', 'ゅ', 'ょ', 'ャ', 'ュ', 'ョ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ')
     }
 
     private fun isLatin(text: String): Boolean {

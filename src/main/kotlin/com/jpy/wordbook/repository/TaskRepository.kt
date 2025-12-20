@@ -85,6 +85,18 @@ class TaskRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun countBySessionId(sessionId: String): Int {
+        dataSource.connection.use { conn ->
+            val sql = "SELECT COUNT(*) FROM tasks WHERE session_id = ?"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setString(1, sessionId)
+                stmt.executeQuery().use { rs ->
+                    return if (rs.next()) rs.getInt(1) else 0
+                }
+            }
+        }
+    }
+
     private fun mapRow(rs: ResultSet): Task {
         return Task(
             id = rs.getLong("id"),

@@ -57,6 +57,14 @@ init-mac:
 		echo "✓ Ollama already installed"; \
 	fi
 	@echo ""
+	@# Install ffmpeg (needed for audio conversion in STT)
+	@if ! command -v ffmpeg &> /dev/null; then \
+		echo "Installing ffmpeg..."; \
+		brew install ffmpeg; \
+	else \
+		echo "✓ ffmpeg already installed"; \
+	fi
+	@echo ""
 	@# Setup Python venv and dependencies
 	@echo "Setting up Python virtual environment..."
 	@python3 -m venv .venv

@@ -15,6 +15,12 @@ data class TaskContent(
     val english: String
 )
 
+data class AnswerFeedback(
+    val correct: Boolean,
+    val feedback: String,
+    val suggestion: String?
+)
+
 data class OllamaRequest(
     val model: String,
     val prompt: String,
@@ -49,14 +55,20 @@ class OllamaService(
         return generate(prompt)
     }
 
+    fun checkAnswer(japaneseText: String, correctTranslation: String, userAnswer: String): AnswerFeedback {
+        val prompt = buildCheckAnswerPrompt(japaneseText, correctTranslation, userAnswer)
+        return generateFeedback(prompt)
+    }
+
     private fun buildSentencePrompt(words: List<Word>): String {
         val wordList = words.joinToString(", ") { it.japanese }
         return """
-            Create a natural Japanese sentence that includes at least one of these words: $wordList
+            Create a natural Japanese sentence that MUST include this word: ${words.first().japanese}
 
             Guidelines:
             - Write a simple, natural sentence (beginner level)
-            - You may add common words (particles, verbs, adjectives) to make the sentence grammatically correct and natural
+            - The word "$wordList" MUST appear in the sentence exactly as written
+            - You may add common words (particles, verbs, adjectives) to make the sentence grammatically correct
             - Use appropriate kanji with hiragana/katakana
             - Aim for 5-15 characters
 
@@ -68,11 +80,12 @@ class OllamaService(
     private fun buildLongerSentencePrompt(words: List<Word>): String {
         val wordList = words.joinToString(", ") { it.japanese }
         return """
-            Create a natural Japanese sentence using one or more of these words: $wordList
+            Create a natural Japanese sentence that MUST include at least one of these words: $wordList
 
             Guidelines:
             - Write an intermediate level sentence
-            - Feel free to add common vocabulary to create a natural, meaningful sentence
+            - At least one word from the list MUST appear exactly as written
+            - You may add common vocabulary to make it natural and meaningful
             - Use appropriate kanji, hiragana, and katakana
             - Aim for 12-25 characters
             - Make it interesting or useful for daily life
@@ -85,17 +98,19 @@ class OllamaService(
     private fun buildStoryPrompt(words: List<Word>): String {
         val wordList = words.joinToString(", ") { it.japanese }
         return """
-            Create a short Japanese story (2-4 sentences) incorporating these words: $wordList
+            Create a short Japanese story using these words: $wordList
 
-            Guidelines:
+            IMPORTANT REQUIREMENTS:
+            - The story MUST have exactly 3 sentences (use periods 。 to separate them)
+            - At least one word from the list MUST appear exactly as written
             - Write at beginner to intermediate level
-            - Add any vocabulary needed to make the story flow naturally
             - Use appropriate kanji, hiragana, and katakana
-            - Make it coherent and engaging
-            - Keep it concise but meaningful
+            - Make the 3 sentences form a coherent mini-story
+
+            Example structure: [Setup sentence]。[Development sentence]。[Conclusion sentence]。
 
             Respond in this exact JSON format only:
-            {"japanese": "日本語の物語", "english": "English translation"}
+            {"japanese": "文1。文2。文3。", "english": "English translation of all 3 sentences"}
         """.trimIndent()
     }
 
@@ -130,6 +145,66 @@ class OllamaService(
             TaskContent(
                 japanese = "パースエラー",
                 english = "Parse error"
+            )
+        }
+    }
+
+    private fun buildCheckAnswerPrompt(japaneseText: String, correctTranslation: String, userAnswer: String): String {
+        return """
+            You are a Japanese language teacher checking a student's translation.
+
+            Japanese text: $japaneseText
+            Correct translation: $correctTranslation
+            Student's answer: $userAnswer
+
+            Compare the student's answer with the correct translation. Consider:
+            - The core meaning is captured
+            - Minor wording differences are acceptable if the meaning is preserved
+            - Grammar and phrasing don't need to be identical
+
+            Provide friendly, encouraging feedback.
+
+            Respond in this exact JSON format only:
+            {
+              "correct": true/false,
+              "feedback": "Brief evaluation of their answer",
+              "suggestion": "If incorrect, suggest how to improve (null if correct)"
+            }
+        """.trimIndent()
+    }
+
+    private fun generateFeedback(prompt: String): AnswerFeedback {
+        try {
+            val request = OllamaRequest(
+                model = model,
+                prompt = prompt,
+                stream = false,
+                format = "json"
+            )
+
+            val httpRequest = HttpRequest.POST("/api/generate", request)
+            val response = httpClient.toBlocking().retrieve(httpRequest, OllamaResponse::class.java)
+
+            return parseFeedbackResponse(response.response)
+        } catch (e: Exception) {
+            logger.error("Failed to generate feedback from Ollama", e)
+            return AnswerFeedback(
+                correct = false,
+                feedback = "Unable to check answer at this time.",
+                suggestion = "Please try again later."
+            )
+        }
+    }
+
+    private fun parseFeedbackResponse(response: String): AnswerFeedback {
+        return try {
+            objectMapper.readValue(response)
+        } catch (e: Exception) {
+            logger.error("Failed to parse feedback response: $response", e)
+            AnswerFeedback(
+                correct = false,
+                feedback = "Error processing feedback",
+                suggestion = null
             )
         }
     }

@@ -53,6 +53,26 @@
         </svg>
     </button>
 
+    <!-- Answer input -->
+    <div class="answer-section">
+        <label for="user-answer" class="answer-label">Your translation:</label>
+        <textarea
+            id="user-answer"
+            class="answer-input"
+            placeholder="Type your English translation here..."
+            rows="3"></textarea>
+        <button
+            class="btn btn-secondary check-answer-btn"
+            onclick="checkAnswer(); event.stopPropagation();">
+            Check Answer
+        </button>
+    </div>
+
+    <!-- Feedback area -->
+    <div id="feedback-area" class="feedback-area" style="display: none;">
+        <!-- Will be filled by check answer action -->
+    </div>
+
     <!-- Translation area (initially hidden) -->
     <div id="translation-area" class="translation-area">
         <!-- Will be filled by reveal action -->
@@ -60,7 +80,7 @@
 
     <!-- Vocabulary hints -->
     <div class="vocabulary-hints" th:if="${not #lists.isEmpty(words)}">
-        <span class="hint-label">Words used:</span>
+        <span class="hint-label">Vocabulary hints:</span>
         <div class="word-chips">
             <span class="word-chip" th:each="word : ${words}">
                 <span class="word-jp" th:text="${word.japanese}">Japanese</span>
@@ -196,6 +216,64 @@
     applyReadingAidSettings();
     // Auto-play audio if enabled
     autoPlayIfEnabled();
+
+    async function checkAnswer() {
+        const textarea = document.getElementById('user-answer');
+        const feedbackArea = document.getElementById('feedback-area');
+        const checkBtn = document.querySelector('.check-answer-btn');
+
+        const userAnswer = textarea.value.trim();
+        if (!userAnswer) {
+            alert('Please enter your translation first');
+            return;
+        }
+
+        // Get session and task info from page
+        const taskContainer = document.querySelector('[data-task-index]');
+        if (!taskContainer) return;
+
+        const taskIndex = taskContainer.dataset.taskIndex;
+        const pathParts = window.location.pathname.split('/');
+        const sessionId = pathParts[pathParts.indexOf('session') + 1];
+
+        // Disable button while checking
+        checkBtn.disabled = true;
+        checkBtn.textContent = 'Checking...';
+
+        try {
+            const formData = new FormData();
+            formData.append('userAnswer', userAnswer);
+
+            const response = await fetch(`/api/session/${sessionId}/task/${taskIndex}/check`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const feedback = await response.text();
+            feedbackArea.innerHTML = feedback;
+            feedbackArea.style.display = 'block';
+        } catch (e) {
+            console.error('Failed to check answer:', e);
+            feedbackArea.innerHTML = '<div class="feedback-error">Failed to check answer. Please try again.</div>';
+            feedbackArea.style.display = 'block';
+        } finally {
+            checkBtn.disabled = false;
+            checkBtn.textContent = 'Check Answer';
+        }
+    }
+
+    // Clear answer and feedback when navigating
+    document.body.addEventListener('htmx:beforeRequest', function(event) {
+        if (event.detail.target.id === 'task-container') {
+            const textarea = document.getElementById('user-answer');
+            const feedbackArea = document.getElementById('feedback-area');
+            if (textarea) textarea.value = '';
+            if (feedbackArea) {
+                feedbackArea.innerHTML = '';
+                feedbackArea.style.display = 'none';
+            }
+        }
+    });
 </script>
 </body>
 </html>
