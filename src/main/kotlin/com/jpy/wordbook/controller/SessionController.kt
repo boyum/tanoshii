@@ -25,6 +25,7 @@ class SessionController(
     private val taskGeneratorService: TaskGeneratorService,
     private val vocabularyService: VocabularyService,
     private val ollamaService: OllamaService,
+    private val japaneseTextService: com.jpy.wordbook.service.JapaneseTextService,
     @Named(TaskExecutors.IO) private val executorService: ExecutorService
 ) {
 
@@ -95,13 +96,21 @@ class SessionController(
         val words = vocabularyService.getWordsByIds(task.wordIds)
         val tasks = taskRepository.findBySessionId(id)
 
+        // Create vocabulary map (Japanese -> English) for hover tooltips
+        // Load ALL vocabulary so every word can show its meaning
+        val vocabularyMap = vocabularyService.getAllWords().associate { it.japanese to it.english }
+
+        // Split into sentences with word tokens for word-by-word romaji display
+        val sentencesWithTokens = japaneseTextService.toSentencesWithTokens(task.japaneseText, vocabularyMap)
+
         return mapOf(
             "sessionId" to id,
             "task" to task,
             "taskIndex" to index,
             "totalTasks" to tasks.size,
             "words" to words,
-            "showTranslation" to false
+            "showTranslation" to false,
+            "sentencesWithTokens" to sentencesWithTokens
         )
     }
 

@@ -483,6 +483,108 @@ body:has(.home) {
   margin-bottom: 20px;
 }
 
+/* Word line - horizontal layout of words */
+.word-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em 6px;
+  align-items: flex-start;
+}
+
+/* Individual word token */
+.word-token {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  position: relative;
+}
+
+/* Word token with meaning (hoverable) */
+.word-token.has-meaning {
+  cursor: help;
+}
+
+.word-token.has-meaning:hover {
+  opacity: 1;
+}
+
+.word-token.has-meaning .word-surface {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--text-muted);
+  text-underline-offset: 3px;
+}
+
+/* Custom tooltip */
+.word-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 1000;
+}
+
+/* Tooltip arrow */
+.word-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--surface);
+}
+
+/* Show tooltip on hover */
+.word-token.has-meaning:hover .word-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Japanese word surface */
+.word-surface {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  color: var(--text);
+  min-height: 41.59px; /* To force kanji and hiragana to be the same height */
+}
+
+/* Ruby (furigana) styling within word tokens */
+.word-surface ruby {
+  ruby-align: center;
+}
+
+.word-surface rt {
+  font-size: 0.5em;
+  color: var(--danger);
+  font-weight: 400;
+  user-select: none;
+}
+
+/* Romaji under each word */
+.word-romaji {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  user-select: none;
+}
+
 /* Japanese text */
 .japanese-text {
   font-size: 1.5rem;
@@ -507,7 +609,7 @@ body:has(.home) {
   font-size: 0.875rem;
   color: var(--text-muted);
   font-style: italic;
-  margin-top: 8px;
+  margin-top: 4px;
   line-height: 1.6;
   letter-spacing: 0.02em;
 }

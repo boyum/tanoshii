@@ -101,16 +101,16 @@ class OllamaService(
             Create a short Japanese story using these words: $wordList
 
             IMPORTANT REQUIREMENTS:
-            - The story MUST have exactly 3 sentences (use periods 。 to separate them)
+            - The story MUST have at least 3 sentences, preferably 3-4 sentences (use periods 。 to separate them)
             - At least one word from the list MUST appear exactly as written
             - Write at beginner to intermediate level
             - Use appropriate kanji, hiragana, and katakana
-            - Make the 3 sentences form a coherent mini-story
+            - Make the sentences form a coherent mini-story with a beginning, middle, and end
 
-            Example structure: [Setup sentence]。[Development sentence]。[Conclusion sentence]。
+            Example structure: [Setup sentence]。[Development sentence]。[More development/action]。[Conclusion sentence]。
 
             Respond in this exact JSON format only:
-            {"japanese": "文1。文2。文3。", "english": "English translation of all 3 sentences"}
+            {"japanese": "文1。文2。文3。文4。", "english": "English translation of all sentences"}
         """.trimIndent()
     }
 

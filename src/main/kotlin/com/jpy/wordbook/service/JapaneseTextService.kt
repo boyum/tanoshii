@@ -5,6 +5,17 @@ import com.atilika.kuromoji.ipadic.Tokenizer
 import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
 
+data class WordToken(
+    val surface: String,
+    val romaji: String,
+    val furiganaHtml: String,  // HTML with ruby tags for kanji
+    val meaning: String? = null  // English meaning if available
+)
+
+data class SentenceWithTokens(
+    val tokens: List<WordToken>
+)
+
 @Singleton
 class JapaneseTextService {
     private val logger = LoggerFactory.getLogger(JapaneseTextService::class.java)
@@ -18,6 +29,73 @@ class JapaneseTextService {
         val tokens = tokenizer.tokenize(text)
         return tokens.joinToString("") { token ->
             convertTokenToFurigana(token)
+        }
+    }
+
+    /**
+     * Split Japanese text into sentences and tokenize each word with its romaji.
+     * Returns a list of sentences, where each sentence contains a list of word tokens.
+     * If vocabularyMap is provided, will add English meanings where tokens match vocabulary.
+     */
+    fun toSentencesWithTokens(text: String, vocabularyMap: Map<String, String> = emptyMap()): List<SentenceWithTokens> {
+        val sentences = text.split("。").filter { it.isNotBlank() }
+        return sentences.map { sentence ->
+            val withPeriod = "$sentence。"
+            SentenceWithTokens(tokenizeToWords(withPeriod, vocabularyMap))
+        }
+    }
+
+    /**
+     * Tokenize text into words with their romaji readings and furigana.
+     * If vocabularyMap is provided, will add English meanings where tokens match vocabulary.
+     */
+    private fun tokenizeToWords(text: String, vocabularyMap: Map<String, String> = emptyMap()): List<WordToken> {
+        val tokens = tokenizer.tokenize(text)
+        val wordTokens = mutableListOf<WordToken>()
+
+        for ((index, token) in tokens.withIndex()) {
+            val reading = token.reading
+            var romaji = when {
+                reading == null || reading == "*" || reading.isEmpty() -> {
+                    if (isLatin(token.surface)) {
+                        token.surface
+                    } else {
+                        katakanaToRomaji(token.surface)
+                    }
+                }
+                else -> katakanaToRomaji(reading)
+            }
+
+            // Clean up romaji (remove punctuation marks from romaji display)
+            val cleanRomaji = when (romaji) {
+                ".", ",", "?", "!" -> ""
+                else -> romaji
+            }
+
+            // Generate furigana HTML for this token
+            val furiganaHtml = convertTokenToFurigana(token)
+
+            // Look up meaning in vocabulary map (try surface form and base form)
+            val meaning = vocabularyMap[token.surface]
+                ?: token.baseForm?.let { vocabularyMap[it] }
+
+            if (cleanRomaji.isNotEmpty() || token.surface.isNotBlank()) {
+                wordTokens.add(WordToken(token.surface, cleanRomaji, furiganaHtml, meaning))
+            }
+        }
+
+        return wordTokens
+    }
+
+    /**
+     * Split Japanese text into sentences (by 。) and return both Japanese and romaji for each.
+     * Returns a list of pairs where first is Japanese sentence and second is romaji.
+     */
+    fun toSentencesWithRomaji(text: String): List<Pair<String, String>> {
+        val sentences = text.split("。").filter { it.isNotBlank() }
+        return sentences.map { sentence ->
+            val withPeriod = "$sentence。"
+            Pair(withPeriod, toRomaji(withPeriod))
         }
     }
 
@@ -117,14 +195,15 @@ class JapaneseTextService {
         val surface = token.surface
         val reading = token.reading
 
-        // If no reading available or same as surface, return as-is
+        // If no reading available or same as surface, wrap with empty furigana for consistent height
         if (reading == null || reading == "*" || reading == surface) {
-            return surface
+            return "<ruby>$surface<rt>&nbsp;</rt></ruby>"
         }
 
         // Check if surface contains kanji
         if (!containsKanji(surface)) {
-            return surface
+            // No kanji, but wrap with empty furigana for consistent height
+            return "<ruby>$surface<rt>&nbsp;</rt></ruby>"
         }
 
         // If entire surface is kanji, wrap the whole thing
@@ -138,16 +217,23 @@ class JapaneseTextService {
     }
 
     private fun wrapKanjiWithFurigana(surface: String, reading: String): String {
-        // Simple approach: if we have mixed content, wrap the kanji portion
+        // Wrap kanji with furigana and kana with empty ruby for consistent height
         val result = StringBuilder()
         val hiraganaReading = katakanaToHiragana(reading)
 
         var kanjiStart = -1
+        var kanaStart = -1
         var i = 0
 
         while (i < surface.length) {
             val char = surface[i]
             if (isKanji(char)) {
+                // Flush any pending kana
+                if (kanaStart != -1) {
+                    val kanaPart = surface.substring(kanaStart, i)
+                    result.append("<ruby>$kanaPart<rt>&nbsp;</rt></ruby>")
+                    kanaStart = -1
+                }
                 if (kanjiStart == -1) kanjiStart = i
             } else {
                 if (kanjiStart != -1) {
@@ -157,7 +243,7 @@ class JapaneseTextService {
                     result.append("<ruby>$kanjiPart<rt>$kanjiReading</rt></ruby>")
                     kanjiStart = -1
                 }
-                result.append(char)
+                if (kanaStart == -1) kanaStart = i
             }
             i++
         }
@@ -167,6 +253,12 @@ class JapaneseTextService {
             val kanjiPart = surface.substring(kanjiStart)
             val kanjiReading = extractKanjiReading(surface, hiraganaReading, kanjiStart, surface.length)
             result.append("<ruby>$kanjiPart<rt>$kanjiReading</rt></ruby>")
+        }
+
+        // Handle trailing kana
+        if (kanaStart != -1) {
+            val kanaPart = surface.substring(kanaStart)
+            result.append("<ruby>$kanaPart<rt>&nbsp;</rt></ruby>")
         }
 
         return result.toString()

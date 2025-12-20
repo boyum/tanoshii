@@ -1,279 +1,350 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<body>
-<div th:fragment="task-content" class="task-content" th:data-task-index="${taskIndex}">
-    <div class="task-badge" th:classappend="${task.taskType.name().toLowerCase()}">
-        <span th:text="${task.taskType.name() == 'STORY' ? 'Story' : 'Sentence'}">Sentence</span>
-    </div>
+  <body>
+    <div
+      th:fragment="task-content"
+      class="task-content"
+      th:data-task-index="${taskIndex}"
+    >
+      <div
+        class="task-badge"
+        th:classappend="${task.taskType.name().toLowerCase()}"
+      >
+        <span
+          th:text="${task.taskType.name() == 'STORY' ? 'Story' : 'Sentence'}"
+          >Sentence</span
+        >
+      </div>
 
-    <!-- Reading aid toggles -->
-    <div class="reading-toggles">
-        <button type="button" class="toggle-btn" id="toggle-autoplay" onclick="toggleAutoplay(); event.stopPropagation();">
-            <span class="toggle-indicator"></span>
-            <span class="toggle-label">Auto-play audio</span>
+      <!-- Reading aid toggles -->
+      <div class="reading-toggles">
+        <button
+          type="button"
+          class="toggle-btn"
+          id="toggle-autoplay"
+          onclick="toggleAutoplay(); event.stopPropagation();"
+        >
+          <span class="toggle-indicator"></span>
+          <span class="toggle-label">Auto-play audio</span>
         </button>
-        <button type="button" class="toggle-btn" id="toggle-furigana" onclick="toggleFurigana(); event.stopPropagation();">
-            <span class="toggle-indicator"></span>
-            <span class="toggle-label">Show furigana</span>
+        <button
+          type="button"
+          class="toggle-btn"
+          id="toggle-furigana"
+          onclick="toggleFurigana(); event.stopPropagation();"
+        >
+          <span class="toggle-indicator"></span>
+          <span class="toggle-label">Show furigana</span>
         </button>
-        <button type="button" class="toggle-btn" id="toggle-romaji" onclick="toggleRomaji(); event.stopPropagation();">
-            <span class="toggle-indicator"></span>
-            <span class="toggle-label">Show romaji</span>
+        <button
+          type="button"
+          class="toggle-btn"
+          id="toggle-romaji"
+          onclick="toggleRomaji(); event.stopPropagation();"
+        >
+          <span class="toggle-indicator"></span>
+          <span class="toggle-label">Show romaji</span>
         </button>
-    </div>
+      </div>
 
-    <!-- Japanese text with furigana -->
-    <div class="japanese-container">
-        <!-- Furigana version (with ruby tags) - shown when furigana enabled and available -->
-        <div class="japanese-text furigana-text" th:if="${task.furiganaText != null}" th:utext="${task.furiganaText}">
-            Japanese with ruby
+      <!-- Japanese text with word-by-word romaji -->
+      <div class="japanese-container">
+        <div class="word-line">
+          <th:block th:each="sentence : ${sentencesWithTokens}">
+            <span
+              th:each="token : ${sentence.tokens}"
+              class="word-token"
+              th:classappend="${token.meaning != null ? 'has-meaning' : ''}"
+            >
+              <!-- Furigana version (with ruby tags) -->
+              <span
+                class="word-surface furigana-version"
+                th:utext="${token.furiganaHtml}"
+                >私</span
+              >
+              <!-- Plain version (no furigana) -->
+              <span
+                class="word-surface plain-version"
+                th:text="${token.surface}"
+                >私</span
+              >
+              <!-- Romaji below -->
+              <span class="word-romaji" th:text="${token.romaji}">watashi</span>
+              <!-- Tooltip -->
+              <span
+                th:if="${token.meaning != null}"
+                class="word-tooltip"
+                th:text="${token.meaning}"
+                >meaning</span
+              >
+            </span>
+          </th:block>
         </div>
-        <!-- Plain version - shown when furigana disabled or not available -->
-        <div class="japanese-text plain-text" th:text="${task.japaneseText}">
-            Japanese text here
-        </div>
+      </div>
 
-        <!-- Romaji text below -->
-        <div class="romaji-text" th:if="${task.romajiText != null}" th:text="${task.romajiText}">
-            Romaji text
-        </div>
-    </div>
-
-    <!-- Audio play/pause button -->
-    <button class="audio-btn"
-            id="audio-play-btn"
-            th:if="${task.audioHash != null}"
-            th:data-audio-hash="${task.audioHash}"
-            onclick="toggleAudioPlayback(this);">
-        <svg class="icon-play" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-            <path d="M8 5v14l11-7z"/>
+      <!-- Audio play/pause button -->
+      <button
+        class="audio-btn"
+        id="audio-play-btn"
+        th:if="${task.audioHash != null}"
+        th:data-audio-hash="${task.audioHash}"
+        onclick="toggleAudioPlayback(this);"
+      >
+        <svg
+          class="icon-play"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          width="24"
+          height="24"
+        >
+          <path d="M8 5v14l11-7z" />
         </svg>
-        <svg class="icon-pause" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24" style="display:none;">
-            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+        <svg
+          class="icon-pause"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          width="24"
+          height="24"
+          style="display: none"
+        >
+          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
         </svg>
-    </button>
+      </button>
 
-    <!-- Answer input -->
-    <div class="answer-section">
+      <!-- Answer input -->
+      <div class="answer-section">
         <label for="user-answer" class="answer-label">Your translation:</label>
         <textarea
-            id="user-answer"
-            class="answer-input"
-            placeholder="Type your English translation here..."
-            rows="3"></textarea>
+          id="user-answer"
+          class="answer-input"
+          placeholder="Type your English translation here..."
+          rows="3"
+        ></textarea>
         <button
-            class="btn btn-secondary check-answer-btn"
-            onclick="checkAnswer(); event.stopPropagation();">
-            Check Answer
+          class="btn btn-secondary check-answer-btn"
+          onclick="checkAnswer(); event.stopPropagation();"
+        >
+          Check Answer
         </button>
-    </div>
+      </div>
 
-    <!-- Feedback area -->
-    <div id="feedback-area" class="feedback-area" style="display: none;">
+      <!-- Feedback area -->
+      <div id="feedback-area" class="feedback-area" style="display: none">
         <!-- Will be filled by check answer action -->
-    </div>
+      </div>
 
-    <!-- Translation area (initially hidden) -->
-    <div id="translation-area" class="translation-area">
+      <!-- Translation area (initially hidden) -->
+      <div id="translation-area" class="translation-area">
         <!-- Will be filled by reveal action -->
-    </div>
+      </div>
 
-    <!-- Vocabulary hints -->
-    <div class="vocabulary-hints" th:if="${not #lists.isEmpty(words)}">
+      <!-- Vocabulary hints -->
+      <div class="vocabulary-hints" th:if="${not #lists.isEmpty(words)}">
         <span class="hint-label">Vocabulary hints:</span>
         <div class="word-chips">
-            <span class="word-chip" th:each="word : ${words}">
-                <span class="word-jp" th:text="${word.japanese}">Japanese</span>
-                <span class="word-en" th:text="${word.english}">English</span>
-            </span>
+          <span class="word-chip" th:each="word : ${words}">
+            <span class="word-jp" th:text="${word.japanese}">Japanese</span>
+            <span class="word-en" th:text="${word.english}">English</span>
+          </span>
         </div>
+      </div>
     </div>
-</div>
 
-<script>
-    // Global audio instance for play/pause control (avoid redeclaration on HTMX swap)
-    if (typeof currentAudio === 'undefined') {
+    <script>
+      // Global audio instance for play/pause control (avoid redeclaration on HTMX swap)
+      if (typeof currentAudio === "undefined") {
         var currentAudio = null;
         var isPlaying = false;
-    }
+      }
 
-    function toggleAudioPlayback(button) {
+      function toggleAudioPlayback(button) {
         const hash = button.dataset.audioHash;
         if (!hash) return;
 
         if (isPlaying && currentAudio) {
-            // Pause
-            currentAudio.pause();
-            setPlayingState(false);
+          // Pause
+          currentAudio.pause();
+          setPlayingState(false);
         } else {
-            // Play (or resume)
-            if (currentAudio && currentAudio.src.includes(hash)) {
-                // Resume existing audio
-                currentAudio.play().catch(e => console.error('Audio playback failed:', e));
-            } else {
-                // Create new audio
-                playAudioByHash(hash);
-            }
+          // Play (or resume)
+          if (currentAudio && currentAudio.src.includes(hash)) {
+            // Resume existing audio
+            currentAudio
+              .play()
+              .catch((e) => console.error("Audio playback failed:", e));
+          } else {
+            // Create new audio
+            playAudioByHash(hash);
+          }
         }
-    }
+      }
 
-    function playAudioByHash(hash) {
+      function playAudioByHash(hash) {
         // Stop any existing audio
         if (currentAudio) {
-            currentAudio.pause();
-            currentAudio = null;
+          currentAudio.pause();
+          currentAudio = null;
         }
 
         currentAudio = new Audio(`/audio/${hash}.mp3`);
-        currentAudio.addEventListener('ended', () => setPlayingState(false));
-        currentAudio.addEventListener('pause', () => setPlayingState(false));
-        currentAudio.addEventListener('play', () => setPlayingState(true));
-        currentAudio.play().catch(e => {
-            console.error('Audio playback failed:', e);
-            setPlayingState(false);
+        currentAudio.addEventListener("ended", () => setPlayingState(false));
+        currentAudio.addEventListener("pause", () => setPlayingState(false));
+        currentAudio.addEventListener("play", () => setPlayingState(true));
+        currentAudio.play().catch((e) => {
+          console.error("Audio playback failed:", e);
+          setPlayingState(false);
         });
-    }
+      }
 
-    function setPlayingState(playing) {
+      function setPlayingState(playing) {
         isPlaying = playing;
-        const btn = document.getElementById('audio-play-btn');
+        const btn = document.getElementById("audio-play-btn");
         if (btn) {
-            const playIcon = btn.querySelector('.icon-play');
-            const pauseIcon = btn.querySelector('.icon-pause');
-            if (playIcon) playIcon.style.display = playing ? 'none' : 'block';
-            if (pauseIcon) pauseIcon.style.display = playing ? 'block' : 'none';
+          const playIcon = btn.querySelector(".icon-play");
+          const pauseIcon = btn.querySelector(".icon-pause");
+          if (playIcon) playIcon.style.display = playing ? "none" : "block";
+          if (pauseIcon) pauseIcon.style.display = playing ? "block" : "none";
         }
-    }
+      }
 
-    function toggleAutoplay() {
-        const enabled = localStorage.getItem('autoplayEnabled') !== 'false';
-        localStorage.setItem('autoplayEnabled', !enabled);
+      function toggleAutoplay() {
+        const enabled = localStorage.getItem("autoplayEnabled") !== "false";
+        localStorage.setItem("autoplayEnabled", !enabled);
         applyReadingAidSettings();
-    }
+      }
 
-    function toggleFurigana() {
-        const enabled = localStorage.getItem('furiganaEnabled') !== 'false';
-        localStorage.setItem('furiganaEnabled', !enabled);
+      function toggleFurigana() {
+        const enabled = localStorage.getItem("furiganaEnabled") !== "false";
+        localStorage.setItem("furiganaEnabled", !enabled);
         applyReadingAidSettings();
-    }
+      }
 
-    function toggleRomaji() {
-        const enabled = localStorage.getItem('romajiEnabled') !== 'false';
-        localStorage.setItem('romajiEnabled', !enabled);
+      function toggleRomaji() {
+        const enabled = localStorage.getItem("romajiEnabled") !== "false";
+        localStorage.setItem("romajiEnabled", !enabled);
         applyReadingAidSettings();
-    }
+      }
 
-    function applyReadingAidSettings() {
-        const autoplayEnabled = localStorage.getItem('autoplayEnabled') !== 'false';
-        const furiganaEnabled = localStorage.getItem('furiganaEnabled') !== 'false';
-        const romajiEnabled = localStorage.getItem('romajiEnabled') !== 'false';
+      function applyReadingAidSettings() {
+        const autoplayEnabled =
+          localStorage.getItem("autoplayEnabled") !== "false";
+        const furiganaEnabled =
+          localStorage.getItem("furiganaEnabled") !== "false";
+        const romajiEnabled = localStorage.getItem("romajiEnabled") !== "false";
 
         // Update toggle buttons
-        const autoplayBtn = document.getElementById('toggle-autoplay');
-        const furiganaBtn = document.getElementById('toggle-furigana');
-        const romajiBtn = document.getElementById('toggle-romaji');
+        const autoplayBtn = document.getElementById("toggle-autoplay");
+        const furiganaBtn = document.getElementById("toggle-furigana");
+        const romajiBtn = document.getElementById("toggle-romaji");
 
         if (autoplayBtn) {
-            autoplayBtn.classList.toggle('enabled', autoplayEnabled);
+          autoplayBtn.classList.toggle("enabled", autoplayEnabled);
         }
         if (furiganaBtn) {
-            furiganaBtn.classList.toggle('enabled', furiganaEnabled);
+          furiganaBtn.classList.toggle("enabled", furiganaEnabled);
         }
         if (romajiBtn) {
-            romajiBtn.classList.toggle('enabled', romajiEnabled);
+          romajiBtn.classList.toggle("enabled", romajiEnabled);
         }
 
-        // Update text visibility
-        // Check if furigana is available (element exists in DOM)
-        const furiganaTexts = document.querySelectorAll('.furigana-text');
-        const hasFurigana = furiganaTexts.length > 0;
+        // Toggle furigana vs plain text
+        document.querySelectorAll(".furigana-version").forEach((el) => {
+          el.style.display = furiganaEnabled ? "inline" : "none";
+        });
 
-        furiganaTexts.forEach(el => {
-            el.style.display = furiganaEnabled ? 'block' : 'none';
+        document.querySelectorAll(".plain-version").forEach((el) => {
+          el.style.display = furiganaEnabled ? "none" : "inline";
         });
-        document.querySelectorAll('.plain-text').forEach(el => {
-            // Show plain text if furigana is disabled OR if furigana is not available
-            el.style.display = (!furiganaEnabled || !hasFurigana) ? 'block' : 'none';
-        });
-        document.querySelectorAll('.romaji-text').forEach(el => {
-            el.style.display = romajiEnabled ? 'block' : 'none';
-        });
-    }
 
-    function autoPlayIfEnabled() {
-        const autoplayEnabled = localStorage.getItem('autoplayEnabled') !== 'false';
+        // Update romaji visibility (word-by-word)
+        document.querySelectorAll(".word-romaji").forEach((el) => {
+          el.style.display = romajiEnabled ? "inline" : "none";
+        });
+      }
+
+      function autoPlayIfEnabled() {
+        const autoplayEnabled =
+          localStorage.getItem("autoplayEnabled") !== "false";
         if (autoplayEnabled) {
-            const audioBtn = document.querySelector('.audio-btn[data-audio-hash]');
-            if (audioBtn) {
-                const hash = audioBtn.dataset.audioHash;
-                // Small delay to ensure the UI has rendered
-                setTimeout(() => playAudioByHash(hash), 100);
-            }
+          const audioBtn = document.querySelector(
+            ".audio-btn[data-audio-hash]",
+          );
+          if (audioBtn) {
+            const hash = audioBtn.dataset.audioHash;
+            // Small delay to ensure the UI has rendered
+            setTimeout(() => playAudioByHash(hash), 100);
+          }
         }
-    }
+      }
 
-    // Apply settings on load
-    applyReadingAidSettings();
-    // Auto-play audio if enabled
-    autoPlayIfEnabled();
+      // Apply settings on load
+      applyReadingAidSettings();
+      // Auto-play audio if enabled
+      autoPlayIfEnabled();
 
-    async function checkAnswer() {
-        const textarea = document.getElementById('user-answer');
-        const feedbackArea = document.getElementById('feedback-area');
-        const checkBtn = document.querySelector('.check-answer-btn');
+      async function checkAnswer() {
+        const textarea = document.getElementById("user-answer");
+        const feedbackArea = document.getElementById("feedback-area");
+        const checkBtn = document.querySelector(".check-answer-btn");
 
         const userAnswer = textarea.value.trim();
         if (!userAnswer) {
-            alert('Please enter your translation first');
-            return;
+          alert("Please enter your translation first");
+          return;
         }
 
         // Get session and task info from page
-        const taskContainer = document.querySelector('[data-task-index]');
+        const taskContainer = document.querySelector("[data-task-index]");
         if (!taskContainer) return;
 
         const taskIndex = taskContainer.dataset.taskIndex;
-        const pathParts = window.location.pathname.split('/');
-        const sessionId = pathParts[pathParts.indexOf('session') + 1];
+        const pathParts = window.location.pathname.split("/");
+        const sessionId = pathParts[pathParts.indexOf("session") + 1];
 
         // Disable button while checking
         checkBtn.disabled = true;
-        checkBtn.textContent = 'Checking...';
+        checkBtn.textContent = "Checking...";
 
         try {
-            const formData = new FormData();
-            formData.append('userAnswer', userAnswer);
+          const formData = new FormData();
+          formData.append("userAnswer", userAnswer);
 
-            const response = await fetch(`/api/session/${sessionId}/task/${taskIndex}/check`, {
-                method: 'POST',
-                body: formData
-            });
+          const response = await fetch(
+            `/api/session/${sessionId}/task/${taskIndex}/check`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
 
-            const feedback = await response.text();
-            feedbackArea.innerHTML = feedback;
-            feedbackArea.style.display = 'block';
+          const feedback = await response.text();
+          feedbackArea.innerHTML = feedback;
+          feedbackArea.style.display = "block";
         } catch (e) {
-            console.error('Failed to check answer:', e);
-            feedbackArea.innerHTML = '<div class="feedback-error">Failed to check answer. Please try again.</div>';
-            feedbackArea.style.display = 'block';
+          console.error("Failed to check answer:", e);
+          feedbackArea.innerHTML =
+            '<div class="feedback-error">Failed to check answer. Please try again.</div>';
+          feedbackArea.style.display = "block";
         } finally {
-            checkBtn.disabled = false;
-            checkBtn.textContent = 'Check Answer';
+          checkBtn.disabled = false;
+          checkBtn.textContent = "Check Answer";
         }
-    }
+      }
 
-    // Clear answer and feedback when navigating
-    document.body.addEventListener('htmx:beforeRequest', function(event) {
-        if (event.detail.target.id === 'task-container') {
-            const textarea = document.getElementById('user-answer');
-            const feedbackArea = document.getElementById('feedback-area');
-            if (textarea) textarea.value = '';
-            if (feedbackArea) {
-                feedbackArea.innerHTML = '';
-                feedbackArea.style.display = 'none';
-            }
+      // Clear answer and feedback when navigating
+      document.body.addEventListener("htmx:beforeRequest", function (event) {
+        if (event.detail.target.id === "task-container") {
+          const textarea = document.getElementById("user-answer");
+          const feedbackArea = document.getElementById("feedback-area");
+          if (textarea) textarea.value = "";
+          if (feedbackArea) {
+            feedbackArea.innerHTML = "";
+            feedbackArea.style.display = "none";
+          }
         }
-    });
-</script>
-</body>
+      });
+    </script>
+  </body>
 </html>

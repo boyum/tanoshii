@@ -243,6 +243,8 @@ class VocabularyService(
 
     fun getWordsByIds(ids: List<Long>): List<Word> = wordRepository.findByIds(ids)
 
+    fun getAllWords(): List<Word> = wordRepository.findAll()
+
     fun getAllCategories(): List<String> = wordRepository.getCategories()
 
     fun getWordCount(): Long = wordRepository.count()

@@ -12,7 +12,8 @@ class TaskGeneratorService(
     private val ollamaService: OllamaService,
     private val japaneseTextService: JapaneseTextService,
     private val audioService: AudioService,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    private val sessionRepository: com.jpy.wordbook.repository.SessionRepository
 ) {
     private val logger = LoggerFactory.getLogger(TaskGeneratorService::class.java)
 
@@ -20,7 +21,18 @@ class TaskGeneratorService(
     private val sessionTotalTasks = ConcurrentHashMap<String, Int>()
 
     fun getTotalTasksForSession(sessionId: String): Int {
-        return sessionTotalTasks[sessionId] ?: 0
+        // Check in-memory cache first
+        sessionTotalTasks[sessionId]?.let { return it }
+
+        // If not in cache, look up session and calculate from difficulty
+        val session = sessionRepository.findById(sessionId) ?: return 0
+        val taskConfigs = getTaskConfigsForDifficulty(session.difficulty)
+        val total = taskConfigs.size
+
+        // Cache it for future calls
+        sessionTotalTasks[sessionId] = total
+
+        return total
     }
 
     fun getGeneratedTaskCount(sessionId: String): Int {
@@ -122,13 +134,13 @@ class TaskGeneratorService(
                 (0 until 10).map { TaskConfig(TaskType.SENTENCE, 2) }
             }
             Difficulty.MEDIUM -> {
-                // 5 sentences + 5 stories
-                (0 until 5).map { TaskConfig(TaskType.SENTENCE, 2) } +
-                (0 until 5).map { TaskConfig(TaskType.STORY, 3) }
+                // 3 sentences + 7 stories
+                (0 until 3).map { TaskConfig(TaskType.SENTENCE, 2) } +
+                (0 until 7).map { TaskConfig(TaskType.STORY, 3) }
             }
             Difficulty.HARD -> {
-                // 10 longer sentences
-                (0 until 10).map { TaskConfig(TaskType.SENTENCE, 3) }
+                // 10 stories
+                (0 until 10).map { TaskConfig(TaskType.STORY, 4) }
             }
         }
     }
