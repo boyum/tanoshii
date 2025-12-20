@@ -1,0 +1,26 @@
+micronaut:
+  application:
+    name: tanoshii
+  server:
+    port: 8080
+    host: 0.0.0.0
+
+datasources:
+  default:
+    url: jdbc:sqlite:/app/data/database.sqlite
+    driver-class-name: org.sqlite.JDBC
+    dialect: SQLITE
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+
+ollama:
+  base-url: ${OLLAMA_BASE_URL:`http://ollama:11434`}
+  model: qwen2.5:7b
+
+edge-tts:
+  voice: ja-JP-NanamiNeural
+  cache-dir: /app/audio-cache

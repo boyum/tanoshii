@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tanoshii-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  # Service to pull the model on first run
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: tanoshii-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Checking if model qwen2.5:7b is available..."
+        if ! curl -s http://ollama:11434/api/tags | grep -q "qwen2.5:7b"; then
+          echo "Pulling qwen2.5:7b model (this may take several minutes)..."
+          curl -X POST http://ollama:11434/api/pull -d '{"name":"qwen2.5:7b"}' &
+          echo "Model pull initiated in background. App will start and use it when ready."
+        else
+          echo "Model qwen2.5:7b already available"
+        fi
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tanoshii-app
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - MICRONAUT_ENVIRONMENTS=docker
+    volumes:
+      - app-data:/app/data
+      - audio-cache:/app/audio-cache
+      - ./known-words:/app/known-words:ro
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
+    driver: local
+  app-data:
+    driver: local
+  audio-cache:
+    driver: local

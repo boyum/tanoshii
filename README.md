@@ -21,7 +21,58 @@ make start
 
 Then open **<http://localhost:8080>** in your browser.
 
+## Docker Setup (Recommended for All Platforms)
+
+If you have Docker installed, this is the easiest way to run Tanoshii:
+
+```bash
+git clone https://github.com/boyum/tanoshii
+cd tanoshii
+docker-compose up -d
+```
+
+That's it! The first startup will take several minutes as it:
+
+- Builds the application
+- Downloads the Ollama LLM (Qwen 2.5, ~4.7 GB)
+- Sets up the database
+
+Once running, open **<http://localhost:8080>** in your browser.
+
+### Docker Commands
+
+```bash
+docker-compose up -d        # Start all services in background
+docker-compose logs -f app  # View application logs
+docker-compose logs -f ollama # View Ollama logs
+docker-compose down         # Stop all services
+docker-compose down -v      # Stop and remove all data (fresh start)
+docker-compose restart app  # Restart just the app
+```
+
+### Custom Vocabulary with Docker
+
+Place your CSV files in the `known-words/` directory before starting:
+
+```bash
+mkdir -p known-words
+# Add your CSV files to known-words/
+docker-compose up -d
+```
+
+The `known-words/` directory is automatically mounted into the container.
+
+**For detailed Docker documentation, see [DOCKER.md](DOCKER.md)**
+
 ## Requirements
+
+### Docker Setup
+
+- Docker and Docker Compose
+- At least 8 GB of free disk space (for LLM model)
+- 4 GB RAM minimum (8 GB recommended)
+
+### Native Setup (macOS)
 
 - macOS (Apple Silicon M1/M2/M3/M4 recommended)
 - Java 17+
@@ -77,7 +128,7 @@ pip install -r scripts/requirements.txt
 ./gradlew run
 ```
 
-The app will be available at: **http://localhost:8080**
+The app will be available at: **<http://localhost:8080>**
 
 ## Custom Vocabulary
 
@@ -124,6 +175,37 @@ edge-tts:
 ```
 
 ## Troubleshooting
+
+### Docker: Services not starting
+
+Check the logs:
+
+```bash
+docker-compose logs -f
+```
+
+If Ollama is still downloading the model, wait a few more minutes. You can monitor progress:
+
+```bash
+docker-compose logs -f ollama
+```
+
+### Docker: Application can't connect to Ollama
+
+The app starts before the LLM model finishes downloading. Once the model is ready, restart the app:
+
+```bash
+docker-compose restart app
+```
+
+### Docker: Fresh start
+
+To completely reset and remove all data:
+
+```bash
+docker-compose down -v
+docker-compose up -d
+```
 
 ### Ollama not responding
 
