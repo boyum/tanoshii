@@ -14,5 +14,6 @@ data class Task(
     val wordIds: List<Long>,
     val audioHash: String? = null,
     val furiganaText: String? = null,
-    val romajiText: String? = null
+    val romajiText: String? = null,
+    val wordTranslations: Map<String, String>? = null  // Japanese word -> English meaning
 )

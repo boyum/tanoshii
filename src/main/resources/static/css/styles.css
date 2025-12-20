@@ -231,6 +231,97 @@ body:has(.home) {
   margin-top: 2px;
 }
 
+/* Previous sessions section */
+.previous-sessions {
+  background: var(--surface);
+  padding: 28px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.previous-sessions h2 {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.previous-sessions h2 .icon {
+  font-size: 1.5rem;
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.session-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+
+.session-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-difficulty {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.session-difficulty.easy {
+  background: rgba(134, 239, 172, 0.1);
+  color: rgb(34, 197, 94);
+}
+
+.session-difficulty.medium {
+  background: rgba(252, 211, 77, 0.1);
+  color: rgb(234, 179, 8);
+}
+
+.session-difficulty.hard {
+  background: rgba(248, 113, 113, 0.1);
+  color: rgb(239, 68, 68);
+}
+
+.session-date {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.session-arrow {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.session-card:hover .session-arrow {
+  transform: translateX(4px);
+  color: var(--primary);
+}
+
 /* Conversation section on home */
 .conversation-section {
   background: var(--surface);

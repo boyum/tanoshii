@@ -60,6 +60,11 @@ class OllamaService(
         return generateFeedback(prompt)
     }
 
+    fun generateWordTranslations(japaneseText: String): Map<String, String> {
+        val prompt = buildWordTranslationsPrompt(japaneseText)
+        return generateTranslations(prompt)
+    }
+
     private fun buildSentencePrompt(words: List<Word>): String {
         val wordList = words.joinToString(", ") { it.japanese }
         return """
@@ -206,6 +211,63 @@ class OllamaService(
                 feedback = "Error processing feedback",
                 suggestion = null
             )
+        }
+    }
+
+    private fun buildWordTranslationsPrompt(japaneseText: String): String {
+        return """
+            You are a Japanese language expert. Analyze the following Japanese text and provide word-by-word translations.
+
+            Japanese text: $japaneseText
+
+            For each meaningful word, particle, or phrase in the text, provide its English meaning or grammatical function.
+            Include:
+            - Nouns, verbs, adjectives, adverbs
+            - Particles and their grammatical function (e.g., "は" -> "topic marker (wa)")
+            - Common expressions
+
+            Respond in this exact JSON format only:
+            {
+              "word1": "meaning1",
+              "word2": "meaning2",
+              "particle": "grammatical function"
+            }
+
+            Example for "私は学生です":
+            {
+              "私": "I, me",
+              "は": "topic marker (wa)",
+              "学生": "student",
+              "です": "to be (polite)"
+            }
+        """.trimIndent()
+    }
+
+    private fun generateTranslations(prompt: String): Map<String, String> {
+        try {
+            val request = OllamaRequest(
+                model = model,
+                prompt = prompt,
+                stream = false,
+                format = "json"
+            )
+
+            val httpRequest = HttpRequest.POST("/api/generate", request)
+            val response = httpClient.toBlocking().retrieve(httpRequest, OllamaResponse::class.java)
+
+            return parseTranslationsResponse(response.response)
+        } catch (e: Exception) {
+            logger.error("Failed to generate word translations from Ollama", e)
+            return emptyMap()
+        }
+    }
+
+    private fun parseTranslationsResponse(response: String): Map<String, String> {
+        return try {
+            objectMapper.readValue(response)
+        } catch (e: Exception) {
+            logger.error("Failed to parse translations response: $response", e)
+            emptyMap()
         }
     }
 }

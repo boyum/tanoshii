@@ -56,6 +56,26 @@
         </form>
     </section>
 
+    <!-- Previous sessions -->
+    <section class="previous-sessions" th:if="${not #lists.isEmpty(recentSessions)}">
+        <h2><span class="icon">📚</span> Recent Sessions</h2>
+        <div class="sessions-list">
+            <a th:each="session : ${recentSessions}"
+               th:href="@{/session/{id}(id=${session.id})}"
+               class="session-card">
+                <div class="session-info">
+                    <span class="session-difficulty" th:classappend="${session.difficulty.name().toLowerCase()}">
+                        <span th:text="${#strings.capitalize(session.difficulty.name().toLowerCase())}">Easy</span>
+                    </span>
+                    <span class="session-date" th:text="${#temporals.format(session.createdAt, 'MMM dd, yyyy HH:mm')}">Jan 01, 2024 12:00</span>
+                </div>
+                <svg class="session-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
+            </a>
+        </div>
+    </section>
+
     <!-- Conversation mode -->
     <section class="conversation-section">
         <h2><span class="icon">🎙️</span> Conversation</h2>

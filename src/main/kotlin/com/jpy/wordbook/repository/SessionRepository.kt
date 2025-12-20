@@ -63,6 +63,18 @@ class SessionRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun findRecent(limit: Int = 10): List<Session> {
+        dataSource.connection.use { conn ->
+            val sql = "SELECT * FROM sessions ORDER BY created_at DESC LIMIT ?"
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.setInt(1, limit)
+                stmt.executeQuery().use { rs ->
+                    return generateSequence { if (rs.next()) mapRow(rs) else null }.toList()
+                }
+            }
+        }
+    }
+
     private fun mapRow(rs: ResultSet): Session {
         return Session(
             id = rs.getString("id"),

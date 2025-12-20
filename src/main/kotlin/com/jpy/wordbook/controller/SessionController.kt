@@ -98,7 +98,11 @@ class SessionController(
 
         // Create vocabulary map (Japanese -> English) for hover tooltips
         // Load ALL vocabulary so every word can show its meaning
-        val vocabularyMap = vocabularyService.getAllWords().associate { it.japanese to it.english }
+        val baseVocabularyMap = vocabularyService.getAllWords().associate { it.japanese to it.english }
+
+        // Merge with LLM-generated word translations (if available)
+        // LLM translations take priority as they're context-specific
+        val vocabularyMap = baseVocabularyMap + (task.wordTranslations ?: emptyMap())
 
         // Split into sentences with word tokens for word-by-word romaji display
         val sentencesWithTokens = japaneseTextService.toSentencesWithTokens(task.japaneseText, vocabularyMap)

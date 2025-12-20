@@ -17,8 +17,8 @@ class TaskRepository(private val dataSource: DataSource) {
     fun save(task: Task): Task {
         dataSource.connection.use { conn ->
             val sql = """
-                INSERT INTO tasks (session_id, task_index, task_type, japanese_text, english_translation, word_ids, audio_hash, furigana_text, romaji_text)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO tasks (session_id, task_index, task_type, japanese_text, english_translation, word_ids, audio_hash, furigana_text, romaji_text, word_translations)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent()
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, task.sessionId)
@@ -30,6 +30,7 @@ class TaskRepository(private val dataSource: DataSource) {
                 stmt.setString(7, task.audioHash)
                 stmt.setString(8, task.furiganaText)
                 stmt.setString(9, task.romajiText)
+                stmt.setString(10, task.wordTranslations?.let { objectMapper.writeValueAsString(it) })
                 stmt.executeUpdate()
             }
 
@@ -98,6 +99,7 @@ class TaskRepository(private val dataSource: DataSource) {
     }
 
     private fun mapRow(rs: ResultSet): Task {
+        val wordTranslationsJson = rs.getString("word_translations")
         return Task(
             id = rs.getLong("id"),
             sessionId = rs.getString("session_id"),
@@ -108,7 +110,8 @@ class TaskRepository(private val dataSource: DataSource) {
             wordIds = objectMapper.readValue(rs.getString("word_ids")),
             audioHash = rs.getString("audio_hash"),
             furiganaText = rs.getString("furigana_text"),
-            romajiText = rs.getString("romaji_text")
+            romajiText = rs.getString("romaji_text"),
+            wordTranslations = wordTranslationsJson?.let { objectMapper.readValue(it) }
         )
     }
 }
