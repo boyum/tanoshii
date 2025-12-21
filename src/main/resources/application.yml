@@ -33,21 +33,17 @@ flyway:
       locations: classpath:db/migration
 
 llm:
-  # Provider: "ollama" or "gemini"
-  provider: ollama
+  # Provider: "ollama" or "gemini" (can be overridden by LLM_PROVIDER env var)
+  provider: ${LLM_PROVIDER:`ollama`}
 
-  # Ollama configuration (when provider=ollama)
-  base-url: http://localhost:11434
-  model: qwen2.5:7b
+  # Base URL (can be overridden by LLM_BASE_URL env var)
+  base-url: ${LLM_BASE_URL:`http://localhost:11434`}
 
-  # Gemini configuration (when provider=gemini)
-  # Uncomment and set these when using Gemini:
-  # base-url: https://generativelanguage.googleapis.com
-  # model: gemini-1.5-flash
-  # api-key: ${GOOGLE_AI_API_KEY}
+  # Model name (can be overridden by LLM_MODEL env var)
+  model: ${LLM_MODEL:`qwen2.5:7b`}
 
-  # Leave empty for Ollama (no API key needed)
-  api-key: ""
+  # API key (can be overridden by LLM_API_KEY or GOOGLE_AI_API_KEY env var)
+  api-key: ${LLM_API_KEY:${GOOGLE_AI_API_KEY:``)}
 
 audio:
   cache-dir: audio-cache

@@ -38,11 +38,32 @@ See [GEMINI_SETUP.md](GEMINI_SETUP.md) for detailed instructions.
 ```bash
 git clone https://github.com/boyum/tanoshii
 cd tanoshii
-make init-mac
-make start
+make init-mac  # Installs dependencies and creates .env with Ollama config
+make start     # Auto-starts with Ollama
 ```
 
 Then open **<http://localhost:8080>** in your browser.
+
+**Switching Providers:**
+If you have both Ollama and Gemini configured, `make start` will prompt you to choose:
+
+```bash
+make start
+
+# Output:
+# Both Ollama and Gemini are available!
+# Choose your LLM provider:
+#   1) Ollama (local, private, free)
+#   2) Gemini (cloud, fast, free tier)
+# Enter choice (1 or 2):
+```
+
+Or use specific commands:
+
+- `make start-with-ollama` - Force Ollama
+- `make start-with-gemini` - Force Gemini
+
+See [MAKEFILE_USAGE.md](MAKEFILE_USAGE.md) for all commands.
 
 ## Docker Setup (Recommended for All Platforms)
 

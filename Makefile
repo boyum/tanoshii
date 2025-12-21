@@ -1,19 +1,27 @@
-.PHONY: start stop start-ollama start-app dev clean setup init-mac help
+.PHONY: start stop start-ollama start-app start-with-ollama start-with-gemini dev clean setup init-mac help
 
 JAVA_HOME := /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export JAVA_HOME
+
+# Load environment variables if .env exists
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
 # Default target
 help:
 	@echo "Tanoshii - Japanese Learning App"
 	@echo ""
 	@echo "Usage:"
-	@echo "  make init-mac   - Full setup for macOS (installs all dependencies)"
-	@echo "  make setup      - Install Python deps and pull Ollama model"
-	@echo "  make start      - Start Ollama and the app"
-	@echo "  make stop       - Stop all services"
-	@echo "  make dev        - Start in dev mode (auto-restart on code changes)"
-	@echo "  make clean      - Clean build artifacts and database"
+	@echo "  make init-mac          - Full setup for macOS (installs all dependencies)"
+	@echo "  make setup             - Install Python deps and pull Ollama model"
+	@echo "  make start             - Start the app (with provider selection if both available)"
+	@echo "  make start-with-ollama - Start with Ollama (local)"
+	@echo "  make start-with-gemini - Start with Google Gemini (cloud)"
+	@echo "  make stop              - Stop all services"
+	@echo "  make dev               - Start in dev mode (auto-restart on code changes)"
+	@echo "  make clean             - Clean build artifacts and database"
 	@echo ""
 	@echo "Individual services:"
 	@echo "  make start-ollama  - Start Ollama server"
@@ -85,6 +93,23 @@ init-mac:
 	@echo "Setup complete!"
 	@echo "=========================================="
 	@echo ""
+	@# Create .env file with Ollama defaults
+	@echo "Creating .env file with Ollama configuration..."
+	@echo "# LLM Provider Configuration" > .env
+	@echo "LLM_PROVIDER=ollama" >> .env
+	@echo "LLM_BASE_URL=http://localhost:11434" >> .env
+	@echo "LLM_MODEL=qwen2.5:7b" >> .env
+	@echo "LLM_API_KEY=" >> .env
+	@echo "" >> .env
+	@echo "# To use Google Gemini instead:" >> .env
+	@echo "# 1. Get API key from https://aistudio.google.com/app/apikey" >> .env
+	@echo "# 2. Uncomment and set:" >> .env
+	@echo "# LLM_PROVIDER=gemini" >> .env
+	@echo "# LLM_BASE_URL=https://generativelanguage.googleapis.com" >> .env
+	@echo "# LLM_MODEL=gemini-1.5-flash" >> .env
+	@echo "# GOOGLE_AI_API_KEY=your-api-key-here" >> .env
+	@echo "✓ .env file created"
+	@echo ""
 	@echo "To start the app, run:"
 	@echo "  make start"
 	@echo ""
@@ -103,11 +128,67 @@ setup:
 	@echo ""
 	@echo "Setup complete!"
 
-# Start everything
-start: start-ollama
+# Start everything (with provider selection if both available)
+start:
+	@# Check if both providers are available
+	@OLLAMA_AVAILABLE=false; \
+	GEMINI_AVAILABLE=false; \
+	if pgrep -x "ollama" > /dev/null || command -v ollama &> /dev/null; then \
+		OLLAMA_AVAILABLE=true; \
+	fi; \
+	if [ -n "$$GOOGLE_AI_API_KEY" ] && [ "$$GOOGLE_AI_API_KEY" != "" ]; then \
+		GEMINI_AVAILABLE=true; \
+	fi; \
+	\
+	if [ "$$OLLAMA_AVAILABLE" = true ] && [ "$$GEMINI_AVAILABLE" = true ]; then \
+		echo "Both Ollama and Gemini are available!"; \
+		echo ""; \
+		echo "Choose your LLM provider:"; \
+		echo "  1) Ollama (local, private, free)"; \
+		echo "  2) Gemini (cloud, fast, free tier)"; \
+		echo ""; \
+		read -p "Enter choice (1 or 2): " choice; \
+		case $$choice in \
+			1) $(MAKE) start-with-ollama ;; \
+			2) $(MAKE) start-with-gemini ;; \
+			*) echo "Invalid choice. Defaulting to Ollama..."; $(MAKE) start-with-ollama ;; \
+		esac; \
+	elif [ "$$GEMINI_AVAILABLE" = true ]; then \
+		echo "Starting with Gemini (Ollama not detected)..."; \
+		$(MAKE) start-with-gemini; \
+	else \
+		echo "Starting with Ollama..."; \
+		$(MAKE) start-with-ollama; \
+	fi
+
+# Start with Ollama
+start-with-ollama: start-ollama
 	@sleep 2
-	@echo "Starting Tanoshii..."
-	./gradlew run
+	@echo "Starting Tanoshii with Ollama..."
+	@echo "Provider: Ollama (local)"
+	@echo "Model: qwen2.5:7b"
+	@echo ""
+	LLM_PROVIDER=ollama LLM_BASE_URL=http://localhost:11434 LLM_MODEL=qwen2.5:7b ./gradlew run
+
+# Start with Gemini
+start-with-gemini:
+	@echo "Starting Tanoshii with Google Gemini..."
+	@echo "Provider: Gemini (cloud)"
+	@echo "Model: gemini-1.5-flash"
+	@echo ""
+	@if [ -z "$$GOOGLE_AI_API_KEY" ]; then \
+		echo "ERROR: GOOGLE_AI_API_KEY not set!"; \
+		echo ""; \
+		echo "To use Gemini:"; \
+		echo "1. Get API key from https://aistudio.google.com/app/apikey"; \
+		echo "2. Set environment variable:"; \
+		echo "   export GOOGLE_AI_API_KEY='your-key-here'"; \
+		echo "3. Or add to .env file:"; \
+		echo "   GOOGLE_AI_API_KEY=your-key-here"; \
+		echo ""; \
+		exit 1; \
+	fi
+	LLM_PROVIDER=gemini LLM_BASE_URL=https://generativelanguage.googleapis.com LLM_MODEL=gemini-1.5-flash LLM_API_KEY=$$GOOGLE_AI_API_KEY ./gradlew run
 
 # Start Ollama in background
 start-ollama:
@@ -132,10 +213,17 @@ start-app:
 	./gradlew run
 
 # Development mode with continuous build
-dev: start-ollama
-	@sleep 2
-	@echo "Starting in development mode..."
-	./gradlew run -t
+dev:
+	@# Check provider
+	@if [ -n "$$GOOGLE_AI_API_KEY" ] && [ "$$GOOGLE_AI_API_KEY" != "" ]; then \
+		echo "Starting in development mode with Gemini..."; \
+		LLM_PROVIDER=gemini LLM_BASE_URL=https://generativelanguage.googleapis.com LLM_MODEL=gemini-1.5-flash LLM_API_KEY=$$GOOGLE_AI_API_KEY ./gradlew run -t; \
+	else \
+		$(MAKE) start-ollama; \
+		sleep 2; \
+		echo "Starting in development mode with Ollama..."; \
+		LLM_PROVIDER=ollama ./gradlew run -t; \
+	fi
 
 # Stop all services
 stop:
