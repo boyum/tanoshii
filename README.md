@@ -10,7 +10,30 @@ A Japanese vocabulary learning app with reading practice, AI-generated sentences
 - **Conversation Mode**: Practice speaking Japanese with an AI conversation partner
 - **JLPT N5 Level**: Content designed for beginner learners
 
-## Quick Start (macOS)
+## Quick Start
+
+### Option 1: Using Google Gemini (Free, Cloud-based) ⭐ Easiest
+
+No GPU or powerful computer needed! Uses Google's free Gemini API.
+
+```bash
+git clone https://github.com/boyum/tanoshii
+cd tanoshii
+
+# Get your free API key from https://aistudio.google.com/app/apikey
+export GOOGLE_AI_API_KEY="your-api-key-here"
+
+# Edit application.yml and change provider from "ollama" to "gemini"
+# (See GEMINI_QUICK_START.md for detailed steps)
+
+./gradlew run
+```
+
+**Gemini Free Tier**: 15 requests/min, 1M tokens/day (enough for 10-50 users)
+
+See [GEMINI_SETUP.md](GEMINI_SETUP.md) for detailed instructions.
+
+### Option 2: Using Ollama (Local, Self-hosted)
 
 ```bash
 git clone https://github.com/boyum/tanoshii

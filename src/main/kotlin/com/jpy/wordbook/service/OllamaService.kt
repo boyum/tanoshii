@@ -1,5 +1,6 @@
 package com.jpy.wordbook.service
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jpy.wordbook.model.Word
@@ -12,7 +13,8 @@ import org.slf4j.LoggerFactory
 
 data class TaskContent(
     val japanese: String,
-    val english: String
+    val english: String,
+    val wordTranslations: Map<String, String>? = null
 )
 
 data class AnswerFeedback(
@@ -21,6 +23,7 @@ data class AnswerFeedback(
     val suggestion: String?
 )
 
+// Ollama API types
 data class OllamaRequest(
     val model: String,
     val prompt: String,
@@ -31,13 +34,44 @@ data class OllamaResponse(
     val response: String
 )
 
+// Gemini API types
+data class GeminiRequest(
+    val contents: List<GeminiContent>
+)
+
+data class GeminiContent(
+    val parts: List<GeminiPart>
+)
+
+data class GeminiPart(
+    val text: String
+)
+
+data class GeminiResponse(
+    val candidates: List<GeminiCandidate>
+)
+
+data class GeminiCandidate(
+    val content: GeminiContent,
+    @JsonProperty("finishReason") val finishReason: String? = null
+)
+
 @Singleton
 class OllamaService(
-    @Client("\${ollama.base-url}") private val httpClient: HttpClient,
-    @Value("\${ollama.model}") private val model: String
+    @Client("\${llm.base-url}") private val httpClient: HttpClient,
+    @Value("\${llm.model}") private val model: String,
+    @Value("\${llm.provider:ollama}") private val provider: String,
+    @Value("\${llm.api-key:}") private val apiKey: String
 ) {
     private val logger = LoggerFactory.getLogger(OllamaService::class.java)
     private val objectMapper = jacksonObjectMapper()
+
+    // Cache topic suggestions for 5 minutes to avoid repeated LLM calls
+    @Volatile
+    private var cachedTopics: List<String>? = null
+    @Volatile
+    private var topicsCacheTime: Long = 0
+    private val TOPIC_CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes
 
     fun generateSentence(words: List<Word>, topic: String? = null): TaskContent {
         val prompt = buildSentencePrompt(words, topic)
@@ -65,8 +99,22 @@ class OllamaService(
     }
 
     fun generateTopicSuggestions(): List<String> {
+        // Check cache first
+        val now = System.currentTimeMillis()
+        if (cachedTopics != null && (now - topicsCacheTime) < TOPIC_CACHE_DURATION_MS) {
+            logger.debug("Returning cached topics")
+            return cachedTopics!!
+        }
+
+        // Cache miss or expired - generate new topics
         val prompt = buildTopicSuggestionsPrompt()
-        return generateTopics(prompt)
+        val topics = generateTopics(prompt)
+
+        // Update cache
+        cachedTopics = topics
+        topicsCacheTime = now
+
+        return topics
     }
 
     private fun buildSentencePrompt(words: List<Word>, topic: String?): String {
@@ -83,8 +131,20 @@ class OllamaService(
             - Aim for 5-15 characters
             - End with ONLY ONE punctuation mark (。 or ！ or ？, never multiple)
 
+            CRITICAL: Also provide word-by-word translations for EACH token in the Japanese text.
+            - Break down into individual words and particles (は, が, を, etc.)
+            - Do NOT combine words together
+
             Respond in this exact JSON format only:
-            {"japanese": "日本語の文", "english": "English translation"}
+            {
+              "japanese": "日本語の文",
+              "english": "English translation",
+              "wordTranslations": {
+                "日本語": "Japanese language",
+                "の": "possessive (no)",
+                "文": "sentence"
+              }
+            }
         """.trimIndent()
     }
 
@@ -103,8 +163,20 @@ class OllamaService(
             - Make it interesting or useful for daily life
             - End with ONLY ONE punctuation mark (。 or ！ or ？, never multiple)
 
+            CRITICAL: Also provide word-by-word translations for EACH token in the Japanese text.
+            - Break down into individual words and particles (は, が, を, etc.)
+            - Do NOT combine words together
+
             Respond in this exact JSON format only:
-            {"japanese": "日本語の文", "english": "English translation"}
+            {
+              "japanese": "日本語の文",
+              "english": "English translation",
+              "wordTranslations": {
+                "日本語": "Japanese language",
+                "の": "possessive (no)",
+                "文": "sentence"
+              }
+            }
         """.trimIndent()
     }
 
@@ -124,12 +196,35 @@ class OllamaService(
 
             Example structure: [Setup sentence]。[Development sentence]。[More development/action]。[Conclusion sentence]。
 
+            CRITICAL: Also provide word-by-word translations for EACH token in the Japanese text.
+            - Break down into individual words and particles (は, が, を, etc.)
+            - Do NOT combine words together
+
             Respond in this exact JSON format only:
-            {"japanese": "文1。文2。文3。文4。", "english": "English translation of all sentences"}
+            {
+              "japanese": "文1。文2。文3。文4。",
+              "english": "English translation of all sentences",
+              "wordTranslations": {
+                "文1": "sentence 1",
+                "。": "[ignore punctuation]",
+                "文2": "sentence 2"
+              }
+            }
         """.trimIndent()
     }
 
     private fun generate(prompt: String): TaskContent {
+        return when (provider.lowercase()) {
+            "gemini" -> generateWithGemini(prompt)
+            "ollama" -> generateWithOllama(prompt)
+            else -> {
+                logger.warn("Unknown provider '$provider', falling back to Ollama")
+                generateWithOllama(prompt)
+            }
+        }
+    }
+
+    private fun generateWithOllama(prompt: String): TaskContent {
         try {
             val request = OllamaRequest(
                 model = model,
@@ -143,7 +238,35 @@ class OllamaService(
             return parseResponse(response.response)
         } catch (e: Exception) {
             logger.error("Failed to generate content from Ollama", e)
-            // Return a fallback
+            return TaskContent(
+                japanese = "エラーが発生しました。",
+                english = "An error occurred."
+            )
+        }
+    }
+
+    private fun generateWithGemini(prompt: String): TaskContent {
+        try {
+            val request = GeminiRequest(
+                contents = listOf(
+                    GeminiContent(
+                        parts = listOf(GeminiPart(text = prompt))
+                    )
+                )
+            )
+
+            // Gemini API endpoint format
+            val endpoint = "/v1beta/models/$model:generateContent?key=$apiKey"
+            val httpRequest = HttpRequest.POST(endpoint, request)
+            val response = httpClient.toBlocking().retrieve(httpRequest, GeminiResponse::class.java)
+
+            // Extract text from first candidate
+            val text = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
+                ?: throw Exception("No response from Gemini")
+
+            return parseResponse(text)
+        } catch (e: Exception) {
+            logger.error("Failed to generate content from Gemini", e)
             return TaskContent(
                 japanese = "エラーが発生しました。",
                 english = "An error occurred."

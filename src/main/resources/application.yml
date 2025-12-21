@@ -32,9 +32,22 @@ flyway:
       enabled: true
       locations: classpath:db/migration
 
-ollama:
+llm:
+  # Provider: "ollama" or "gemini"
+  provider: ollama
+
+  # Ollama configuration (when provider=ollama)
   base-url: http://localhost:11434
   model: qwen2.5:7b
+
+  # Gemini configuration (when provider=gemini)
+  # Uncomment and set these when using Gemini:
+  # base-url: https://generativelanguage.googleapis.com
+  # model: gemini-1.5-flash
+  # api-key: ${GOOGLE_AI_API_KEY}
+
+  # Leave empty for Ollama (no API key needed)
+  api-key: ""
 
 audio:
   cache-dir: audio-cache

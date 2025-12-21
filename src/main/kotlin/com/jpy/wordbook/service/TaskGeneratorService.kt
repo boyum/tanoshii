@@ -83,8 +83,10 @@ class TaskGeneratorService(
         // Generate audio for this task
         val audioHash = audioService.getOrGenerateAudio(content.japanese)
 
-        // Generate word-by-word translations using LLM
-        val wordTranslations = ollamaService.generateWordTranslations(content.japanese)
+        // Word translations now come from the same LLM call (content.wordTranslations)
+        // Fallback to separate call only if not provided
+        val wordTranslations = content.wordTranslations
+            ?: ollamaService.generateWordTranslations(content.japanese)
 
         val task = Task(
             sessionId = session.id,
