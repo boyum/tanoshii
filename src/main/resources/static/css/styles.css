@@ -543,27 +543,6 @@ body:has(.home) {
   box-shadow: var(--shadow);
 }
 
-.task-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 16px;
-}
-
-.task-badge.sentence {
-  background: var(--accent-cool);
-  color: var(--primary);
-}
-
-.task-badge.story {
-  background: var(--accent-warm);
-  color: var(--secondary);
-}
-
 /* Reading aid toggles */
 .reading-toggles {
   display: flex;
@@ -619,15 +598,17 @@ body:has(.home) {
 
 /* Japanese text container */
 .japanese-container {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  line-height: 1.4;
 }
 
 /* Word line - horizontal layout of words */
 .word-line {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
-  gap: 1em 6px;
+  gap: 0;
   align-items: flex-start;
+  line-height: 1.4;
 }
 
 /* Individual word token */
@@ -638,6 +619,7 @@ body:has(.home) {
   text-align: center;
   gap: 2px;
   position: relative;
+  margin-right: 0.15em;
 }
 
 /* Word token with meaning (hoverable) */
@@ -714,6 +696,7 @@ body:has(.home) {
   line-height: 1.4;
   color: var(--text);
   min-height: 41.59px; /* To force kanji and hiragana to be the same height */
+  display: inline-block;
 }
 
 /* Ruby (furigana) styling within word tokens */
@@ -726,6 +709,9 @@ body:has(.home) {
   color: var(--danger);
   font-weight: 400;
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Romaji under each word */
@@ -736,6 +722,9 @@ body:has(.home) {
   letter-spacing: 0.02em;
   white-space: nowrap;
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Japanese text */

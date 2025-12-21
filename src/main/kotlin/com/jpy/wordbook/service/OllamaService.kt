@@ -351,12 +351,52 @@ class OllamaService(
             logger.error("Failed to generate topics from Ollama", e)
             // Return random fallback topics
             val allFallbackTopics = listOf(
-                "Starry nights", "Coffee shops", "Video games", "Mountain hiking",
-                "Childhood memories", "Ocean waves", "City lights", "Winter sports",
-                "Street markets", "Space exploration", "Ancient ruins", "Thunderstorms",
-                "Music festivals", "Desert landscapes", "River boats", "Ghost stories",
-                "Art museums", "Spring flowers", "Martial arts", "Train stations",
-                "Busy mornings", "Silent libraries", "Beach sunsets", "Garden parties"
+                // Nature & Weather
+                "Starry nights", "Ocean waves", "Thunderstorms", "Spring flowers", "Beach sunsets",
+                "Mountain hiking", "Desert landscapes", "Autumn leaves", "Cherry blossoms", "Tropical rainforests",
+                "Northern lights", "Full moon", "Rainbow after rain", "Misty mornings", "Snow-covered fields",
+                "Bamboo forests", "Coral reefs", "Wildflower meadows", "Volcanic landscapes", "Foggy mountains",
+
+                // Urban Life
+                "Coffee shops", "City lights", "Train stations", "Busy mornings", "Rooftop views",
+                "Street markets", "Neon signs", "Underground passages", "Rush hour", "Convenience stores",
+                "City parks", "Taxi rides", "Pedestrian crossings", "Skyscrapers", "Bicycle lanes",
+                "Food courts", "Shopping arcades", "Street performers", "City squares", "Night markets",
+
+                // Activities & Hobbies
+                "Video games", "Winter sports", "Martial arts", "Garden parties", "Cooking together",
+                "Board games", "Stargazing", "Photography walks", "Pottery making", "Calligraphy practice",
+                "Fishing trips", "Rock climbing", "Camping adventures", "Bird watching", "Knitting circles",
+                "Dancing lessons", "Karaoke nights", "Origami folding", "Tea ceremonies", "Meditation retreats",
+
+                // Culture & Arts
+                "Music festivals", "Art museums", "Ghost stories", "Ancient ruins", "Theater performances",
+                "Film festivals", "Poetry readings", "Jazz clubs", "Street art", "Opera houses",
+                "Cultural festivals", "Traditional crafts", "Comic books", "Anime conventions", "Folk tales",
+                "Contemporary art", "Historical reenactments", "Puppet shows", "Sculpture gardens", "Dance recitals",
+
+                // Places & Locations
+                "Silent libraries", "Space exploration", "River boats", "Airport terminals", "Old bookstores",
+                "Mountain temples", "Castle ruins", "Hot springs", "Lighthouse keepers", "Harbor views",
+                "Zen gardens", "Village festivals", "Island getaways", "Country roads", "Old neighborhoods",
+                "Seaside towns", "Mountain cabins", "Forest shrines", "Underground caves", "Observatory decks",
+
+                // Daily Life & Moments
+                "Childhood memories", "Morning routines", "Evening walks", "Weekend plans", "Phone calls",
+                "Lost keys", "First dates", "Job interviews", "Moving day", "Birthday surprises",
+                "Study sessions", "Late-night snacks", "Pet adventures", "Family dinners", "Road trips",
+                "Lazy Sundays", "Power outages", "Spring cleaning", "New Year's resolutions", "Grocery shopping",
+
+                // Abstract & Emotional
+                "Distant memories", "Future dreams", "Parallel universes", "Time travel", "Silent wishes",
+                "Hidden talents", "Secret gardens", "Forgotten songs", "Unsent letters", "Stolen moments",
+                "Bittersweet goodbyes", "Second chances", "Broken promises", "Lost friendships", "New beginnings",
+                "Inner peace", "Growing pains", "Cultural identity", "Generation gaps", "Life lessons",
+
+                // Food & Drink
+                "Ramen shops", "Tea time", "Street food", "Farmers markets", "Bakery mornings",
+                "Sushi bars", "Izakaya nights", "Picnic lunches", "Wine tasting", "Home cooking",
+                "Food trucks", "Dessert cafes", "Breakfast traditions", "Dinner parties", "Cooking disasters"
             )
             return allFallbackTopics.shuffled().take(5)
         }
@@ -368,14 +408,54 @@ class OllamaService(
             result["topics"] ?: emptyList()
         } catch (e: Exception) {
             logger.error("Failed to parse topics response: $response", e)
-            // Return random fallback topics
+            // Return random fallback topics (same as above in generateTopicSuggestions)
             val allFallbackTopics = listOf(
-                "Starry nights", "Coffee shops", "Video games", "Mountain hiking",
-                "Childhood memories", "Ocean waves", "City lights", "Winter sports",
-                "Street markets", "Space exploration", "Ancient ruins", "Thunderstorms",
-                "Music festivals", "Desert landscapes", "River boats", "Ghost stories",
-                "Art museums", "Spring flowers", "Martial arts", "Train stations",
-                "Busy mornings", "Silent libraries", "Beach sunsets", "Garden parties"
+                // Nature & Weather
+                "Starry nights", "Ocean waves", "Thunderstorms", "Spring flowers", "Beach sunsets",
+                "Mountain hiking", "Desert landscapes", "Autumn leaves", "Cherry blossoms", "Tropical rainforests",
+                "Northern lights", "Full moon", "Rainbow after rain", "Misty mornings", "Snow-covered fields",
+                "Bamboo forests", "Coral reefs", "Wildflower meadows", "Volcanic landscapes", "Foggy mountains",
+
+                // Urban Life
+                "Coffee shops", "City lights", "Train stations", "Busy mornings", "Rooftop views",
+                "Street markets", "Neon signs", "Underground passages", "Rush hour", "Convenience stores",
+                "City parks", "Taxi rides", "Pedestrian crossings", "Skyscrapers", "Bicycle lanes",
+                "Food courts", "Shopping arcades", "Street performers", "City squares", "Night markets",
+
+                // Activities & Hobbies
+                "Video games", "Winter sports", "Martial arts", "Garden parties", "Cooking together",
+                "Board games", "Stargazing", "Photography walks", "Pottery making", "Calligraphy practice",
+                "Fishing trips", "Rock climbing", "Camping adventures", "Bird watching", "Knitting circles",
+                "Dancing lessons", "Karaoke nights", "Origami folding", "Tea ceremonies", "Meditation retreats",
+
+                // Culture & Arts
+                "Music festivals", "Art museums", "Ghost stories", "Ancient ruins", "Theater performances",
+                "Film festivals", "Poetry readings", "Jazz clubs", "Street art", "Opera houses",
+                "Cultural festivals", "Traditional crafts", "Comic books", "Anime conventions", "Folk tales",
+                "Contemporary art", "Historical reenactments", "Puppet shows", "Sculpture gardens", "Dance recitals",
+
+                // Places & Locations
+                "Silent libraries", "Space exploration", "River boats", "Airport terminals", "Old bookstores",
+                "Mountain temples", "Castle ruins", "Hot springs", "Lighthouse keepers", "Harbor views",
+                "Zen gardens", "Village festivals", "Island getaways", "Country roads", "Old neighborhoods",
+                "Seaside towns", "Mountain cabins", "Forest shrines", "Underground caves", "Observatory decks",
+
+                // Daily Life & Moments
+                "Childhood memories", "Morning routines", "Evening walks", "Weekend plans", "Phone calls",
+                "Lost keys", "First dates", "Job interviews", "Moving day", "Birthday surprises",
+                "Study sessions", "Late-night snacks", "Pet adventures", "Family dinners", "Road trips",
+                "Lazy Sundays", "Power outages", "Spring cleaning", "New Year's resolutions", "Grocery shopping",
+
+                // Abstract & Emotional
+                "Distant memories", "Future dreams", "Parallel universes", "Time travel", "Silent wishes",
+                "Hidden talents", "Secret gardens", "Forgotten songs", "Unsent letters", "Stolen moments",
+                "Bittersweet goodbyes", "Second chances", "Broken promises", "Lost friendships", "New beginnings",
+                "Inner peace", "Growing pains", "Cultural identity", "Generation gaps", "Life lessons",
+
+                // Food & Drink
+                "Ramen shops", "Tea time", "Street food", "Farmers markets", "Bakery mornings",
+                "Sushi bars", "Izakaya nights", "Picnic lunches", "Wine tasting", "Home cooking",
+                "Food trucks", "Dessert cafes", "Breakfast traditions", "Dinner parties", "Cooking disasters"
             )
             allFallbackTopics.shuffled().take(5)
         }
