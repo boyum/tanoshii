@@ -25,7 +25,7 @@
           onclick="toggleWords(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show words</span>
+          <span class="toggle-label">Show words <kbd class="key-hint">W</kbd></span>
         </button>
         <button
           type="button"
@@ -34,7 +34,7 @@
           onclick="toggleAutoplay(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Auto-play audio</span>
+          <span class="toggle-label">Auto-play audio <kbd class="key-hint">A</kbd></span>
         </button>
         <button
           type="button"
@@ -43,7 +43,7 @@
           onclick="toggleFurigana(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show furigana</span>
+          <span class="toggle-label">Show furigana <kbd class="key-hint">F</kbd></span>
         </button>
         <button
           type="button"
@@ -52,7 +52,7 @@
           onclick="toggleRomaji(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show romaji</span>
+          <span class="toggle-label">Show romaji <kbd class="key-hint">R</kbd></span>
         </button>
         <button
           type="button"
@@ -61,7 +61,7 @@
           onclick="toggleTooltips(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show translations</span>
+          <span class="toggle-label">Show translations <kbd class="key-hint">T</kbd></span>
         </button>
       </div>
 
@@ -101,35 +101,38 @@
       </div>
 
       <!-- Audio play/pause button -->
-      <button
-        class="audio-btn"
-        id="audio-play-btn"
-        th:if="${task.audioHash != null}"
-        th:data-audio-hash="${task.audioHash}"
-        onclick="toggleAudioPlayback(this);"
-      >
-        <svg
-          class="icon-play"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          width="24"
-          height="24"
+      <div class="audio-control">
+        <button
+          class="audio-btn"
+          id="audio-play-btn"
+          th:if="${task.audioHash != null}"
+          th:data-audio-hash="${task.audioHash}"
+          onclick="toggleAudioPlayback(this);"
         >
-          <path d="M8 5v14l11-7z" />
-        </svg>
-        <svg
-          class="icon-pause"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          width="24"
-          height="24"
-          style="display: none"
-        >
-          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-        </svg>
-      </button>
+          <svg
+            class="icon-play"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="24"
+            height="24"
+          >
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <svg
+            class="icon-pause"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            width="24"
+            height="24"
+            style="display: none"
+          >
+            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+          </svg>
+        </button>
+        <span class="audio-hint">Press <kbd class="key-hint">Space</kbd> to play</span>
+      </div>
 
       <!-- Answer input -->
       <div class="answer-section">
@@ -145,7 +148,7 @@
           class="btn btn-secondary check-answer-btn"
           onclick="checkAnswer(); event.stopPropagation();"
         >
-          Check Answer
+          Check Answer <kbd class="key-hint-btn">Enter</kbd>
         </button>
       </div>
 

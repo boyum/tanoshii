@@ -49,7 +49,7 @@
                 th:disabled="${currentIndex == 0}"
                 onpointerdown="this.classList.add('pressed');"
                 onpointerup="this.classList.remove('pressed');">
-            Back
+            <kbd class="key-hint-btn">←</kbd> Back
         </button>
 
         <button id="btn-reveal"
@@ -58,7 +58,7 @@
                 hx-target="#translation-area"
                 hx-swap="innerHTML"
                 onpointerdown="this.classList.add('pressed');">
-            Show Translation
+            Show Translation <kbd class="key-hint-btn">S</kbd>
         </button>
 
         <button id="btn-next"
@@ -69,7 +69,7 @@
                 th:disabled="${currentIndex >= totalTasks - 1}"
                 onpointerdown="this.classList.add('pressed');"
                 onpointerup="this.classList.remove('pressed');">
-            Next
+            Next <kbd class="key-hint-btn">→</kbd>
         </button>
     </nav>
 
@@ -189,9 +189,9 @@
 
                 // Show generating hint if waiting
                 if (!atEnd && !nextTaskReady) {
-                    nextBtn.textContent = 'Generating...';
+                    nextBtn.innerHTML = 'Generating...';
                 } else {
-                    nextBtn.textContent = 'Next';
+                    nextBtn.innerHTML = 'Next <kbd class="key-hint-btn">→</kbd>';
                 }
 
                 nextBtn.setAttribute('hx-get', `/api/session/${sessionId}/task/${currentIndex + 1}`);
@@ -218,6 +218,64 @@
                 totalEl.textContent = totalTasks;
             }
         }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Don't trigger shortcuts when typing in textarea
+            if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT') {
+                return;
+            }
+
+            // Space: Play/pause audio
+            if (event.code === 'Space') {
+                event.preventDefault();
+                const audioBtn = document.getElementById('audio-play-btn');
+                if (audioBtn) audioBtn.click();
+            }
+            // ArrowLeft: Previous task
+            else if (event.code === 'ArrowLeft') {
+                event.preventDefault();
+                const backBtn = document.getElementById('btn-back');
+                if (backBtn && !backBtn.disabled) backBtn.click();
+            }
+            // ArrowRight: Next task
+            else if (event.code === 'ArrowRight') {
+                event.preventDefault();
+                const nextBtn = document.getElementById('btn-next');
+                if (nextBtn && !nextBtn.disabled) nextBtn.click();
+            }
+            // S: Show translation
+            else if (event.code === 'KeyS') {
+                event.preventDefault();
+                const revealBtn = document.getElementById('btn-reveal');
+                if (revealBtn) revealBtn.click();
+            }
+            // W: Toggle words
+            else if (event.code === 'KeyW') {
+                event.preventDefault();
+                if (typeof toggleWords === 'function') toggleWords();
+            }
+            // A: Toggle autoplay
+            else if (event.code === 'KeyA') {
+                event.preventDefault();
+                if (typeof toggleAutoplay === 'function') toggleAutoplay();
+            }
+            // F: Toggle furigana
+            else if (event.code === 'KeyF') {
+                event.preventDefault();
+                if (typeof toggleFurigana === 'function') toggleFurigana();
+            }
+            // R: Toggle romaji
+            else if (event.code === 'KeyR') {
+                event.preventDefault();
+                if (typeof toggleRomaji === 'function') toggleRomaji();
+            }
+            // T: Toggle translations/tooltips
+            else if (event.code === 'KeyT') {
+                event.preventDefault();
+                if (typeof toggleTooltips === 'function') toggleTooltips();
+            }
+        });
     </script>
 </main>
 
