@@ -15,6 +15,13 @@
     <p class="feedback-text" th:text="${feedback}">Feedback text</p>
 
     <p class="feedback-suggestion" th:if="${suggestion != null}" th:text="${suggestion}">Suggestion</p>
+
+    <p class="llm-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+            <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+        </svg>
+        AI-generated feedback. May not be fully accurate.
+    </p>
 </div>
 </body>
 </html>

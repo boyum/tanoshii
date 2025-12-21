@@ -74,7 +74,7 @@ class TaskGeneratorService(
 
     private fun generateSingleTask(session: Session, index: Int, config: TaskConfig): Task {
         val words = vocabularyService.getRandomWords(config.wordCount)
-        val content = generateContent(words, config.type, session.difficulty)
+        val content = generateContent(words, config.type, session.difficulty, session.topic)
 
         // Generate furigana and romaji using Kuromoji
         val furigana = japaneseTextService.toFurigana(content.japanese)
@@ -118,16 +118,16 @@ class TaskGeneratorService(
         return tasks
     }
 
-    private fun generateContent(words: List<Word>, type: TaskType, difficulty: Difficulty): TaskContent {
+    private fun generateContent(words: List<Word>, type: TaskType, difficulty: Difficulty, topic: String?): TaskContent {
         return when (type) {
             TaskType.SENTENCE -> {
                 if (difficulty == Difficulty.HARD) {
-                    ollamaService.generateLongerSentence(words)
+                    ollamaService.generateLongerSentence(words, topic)
                 } else {
-                    ollamaService.generateSentence(words)
+                    ollamaService.generateSentence(words, topic)
                 }
             }
-            TaskType.STORY -> ollamaService.generateStory(words)
+            TaskType.STORY -> ollamaService.generateStory(words, topic)
         }
     }
 

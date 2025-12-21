@@ -14,15 +14,16 @@ class SessionRepository(private val dataSource: DataSource) {
     fun save(session: Session): Session {
         dataSource.connection.use { conn ->
             val sql = """
-                INSERT INTO sessions (id, difficulty, created_at, completed_at, current_task_index)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO sessions (id, difficulty, topic, created_at, completed_at, current_task_index)
+                VALUES (?, ?, ?, ?, ?, ?)
             """.trimIndent()
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setString(1, session.id)
                 stmt.setString(2, session.difficulty.name.lowercase())
-                stmt.setTimestamp(3, Timestamp.from(session.createdAt))
-                stmt.setTimestamp(4, session.completedAt?.let { Timestamp.from(it) })
-                stmt.setInt(5, session.currentTaskIndex)
+                stmt.setString(3, session.topic)
+                stmt.setTimestamp(4, Timestamp.from(session.createdAt))
+                stmt.setTimestamp(5, session.completedAt?.let { Timestamp.from(it) })
+                stmt.setInt(6, session.currentTaskIndex)
                 stmt.executeUpdate()
             }
         }
@@ -79,6 +80,7 @@ class SessionRepository(private val dataSource: DataSource) {
         return Session(
             id = rs.getString("id"),
             difficulty = Difficulty.valueOf(rs.getString("difficulty").uppercase()),
+            topic = rs.getString("topic"),
             createdAt = rs.getTimestamp("created_at").toInstant(),
             completedAt = rs.getTimestamp("completed_at")?.toInstant(),
             currentTaskIndex = rs.getInt("current_task_index")

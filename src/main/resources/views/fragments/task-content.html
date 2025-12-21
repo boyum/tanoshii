@@ -21,6 +21,15 @@
         <button
           type="button"
           class="toggle-btn"
+          id="toggle-words"
+          onclick="toggleWords(); event.stopPropagation();"
+        >
+          <span class="toggle-indicator"></span>
+          <span class="toggle-label">Show words</span>
+        </button>
+        <button
+          type="button"
+          class="toggle-btn"
           id="toggle-autoplay"
           onclick="toggleAutoplay(); event.stopPropagation();"
         >
@@ -128,8 +137,9 @@
         <textarea
           id="user-answer"
           class="answer-input"
-          placeholder="Type your English translation here..."
+          placeholder="Type your English translation here... (Enter to submit, Shift+Enter for new line)"
           rows="3"
+          onkeydown="handleAnswerKeydown(event)"
         ></textarea>
         <button
           class="btn btn-secondary check-answer-btn"
@@ -218,6 +228,12 @@
         }
       }
 
+      function toggleWords() {
+        const enabled = localStorage.getItem("wordsEnabled") !== "false";
+        localStorage.setItem("wordsEnabled", !enabled);
+        applyReadingAidSettings();
+      }
+
       function toggleAutoplay() {
         const enabled = localStorage.getItem("autoplayEnabled") !== "false";
         localStorage.setItem("autoplayEnabled", !enabled);
@@ -243,6 +259,7 @@
       }
 
       function applyReadingAidSettings() {
+        const wordsEnabled = localStorage.getItem("wordsEnabled") !== "false";
         const autoplayEnabled =
           localStorage.getItem("autoplayEnabled") !== "false";
         const furiganaEnabled =
@@ -251,11 +268,15 @@
         const tooltipsEnabled = localStorage.getItem("tooltipsEnabled") !== "false";
 
         // Update toggle buttons
+        const wordsBtn = document.getElementById("toggle-words");
         const autoplayBtn = document.getElementById("toggle-autoplay");
         const furiganaBtn = document.getElementById("toggle-furigana");
         const romajiBtn = document.getElementById("toggle-romaji");
         const tooltipsBtn = document.getElementById("toggle-tooltips");
 
+        if (wordsBtn) {
+          wordsBtn.classList.toggle("enabled", wordsEnabled);
+        }
         if (autoplayBtn) {
           autoplayBtn.classList.toggle("enabled", autoplayEnabled);
         }
@@ -267,6 +288,12 @@
         }
         if (tooltipsBtn) {
           tooltipsBtn.classList.toggle("enabled", tooltipsEnabled);
+        }
+
+        // Update words visibility
+        const japaneseContainer = document.querySelector(".japanese-container");
+        if (japaneseContainer) {
+          japaneseContainer.style.display = wordsEnabled ? "block" : "none";
         }
 
         // Toggle furigana vs plain text
@@ -284,7 +311,6 @@
         });
 
         // Update tooltips visibility
-        const japaneseContainer = document.querySelector(".japanese-container");
         if (japaneseContainer) {
           if (tooltipsEnabled) {
             japaneseContainer.classList.remove("tooltips-disabled");
@@ -313,6 +339,14 @@
       applyReadingAidSettings();
       // Auto-play audio if enabled
       autoPlayIfEnabled();
+
+      function handleAnswerKeydown(event) {
+        // Submit on Enter, new line on Shift+Enter
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          checkAnswer();
+        }
+      }
 
       async function checkAnswer() {
         const textarea = document.getElementById("user-answer");

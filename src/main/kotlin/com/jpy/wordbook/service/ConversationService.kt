@@ -89,8 +89,7 @@ class ConversationService(
             val request = OllamaRequest(
                 model = model,
                 prompt = prompt,
-                stream = false,
-                format = "json"
+                stream = false
             )
 
             val httpRequest = HttpRequest.POST("/api/generate", request)

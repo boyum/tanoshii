@@ -303,11 +303,17 @@ class JapaneseTextService {
             val furiganaHtml = convertTokenToFurigana(token)
 
             // Look up meaning in vocabulary map first, then fallback dictionary
-            // Try: surface form in vocab -> base form in vocab -> surface in common -> base in common
+            // Try multiple forms to maximize chance of finding a match:
+            // 1. Surface form (e.g., "食べる")
+            // 2. Base form (e.g., "食べる" for "食べた")
+            // 3. Reading in hiragana (e.g., "たべる" for "食べる")
+            val hiraganaReading = token.reading?.let { katakanaToHiragana(it) }
             val meaning = vocabularyMap[token.surface]
                 ?: token.baseForm?.let { vocabularyMap[it] }
+                ?: hiraganaReading?.let { vocabularyMap[it] }
                 ?: commonWordsDictionary[token.surface]
                 ?: token.baseForm?.let { commonWordsDictionary[it] }
+                ?: hiraganaReading?.let { commonWordsDictionary[it] }
 
             if (cleanRomaji.isNotEmpty() || token.surface.isNotBlank()) {
                 wordTokens.add(WordToken(token.surface, cleanRomaji, furiganaHtml, meaning))

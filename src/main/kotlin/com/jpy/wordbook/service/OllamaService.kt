@@ -24,8 +24,7 @@ data class AnswerFeedback(
 data class OllamaRequest(
     val model: String,
     val prompt: String,
-    val stream: Boolean = false,
-    val format: String = "json"
+    val stream: Boolean = false
 )
 
 data class OllamaResponse(
@@ -40,18 +39,18 @@ class OllamaService(
     private val logger = LoggerFactory.getLogger(OllamaService::class.java)
     private val objectMapper = jacksonObjectMapper()
 
-    fun generateSentence(words: List<Word>): TaskContent {
-        val prompt = buildSentencePrompt(words)
+    fun generateSentence(words: List<Word>, topic: String? = null): TaskContent {
+        val prompt = buildSentencePrompt(words, topic)
         return generate(prompt)
     }
 
-    fun generateLongerSentence(words: List<Word>): TaskContent {
-        val prompt = buildLongerSentencePrompt(words)
+    fun generateLongerSentence(words: List<Word>, topic: String? = null): TaskContent {
+        val prompt = buildLongerSentencePrompt(words, topic)
         return generate(prompt)
     }
 
-    fun generateStory(words: List<Word>): TaskContent {
-        val prompt = buildStoryPrompt(words)
+    fun generateStory(words: List<Word>, topic: String? = null): TaskContent {
+        val prompt = buildStoryPrompt(words, topic)
         return generate(prompt)
     }
 
@@ -65,14 +64,20 @@ class OllamaService(
         return generateTranslations(prompt)
     }
 
-    private fun buildSentencePrompt(words: List<Word>): String {
+    fun generateTopicSuggestions(): List<String> {
+        val prompt = buildTopicSuggestionsPrompt()
+        return generateTopics(prompt)
+    }
+
+    private fun buildSentencePrompt(words: List<Word>, topic: String?): String {
         val wordList = words.joinToString(", ") { it.japanese }
+        val topicContext = topic?.let { "\n            - The sentence should be about or related to: $it" } ?: ""
         return """
             Create a natural Japanese sentence that MUST include this word: ${words.first().japanese}
 
             Guidelines:
             - Write a simple, natural sentence (beginner level)
-            - The word "$wordList" MUST appear in the sentence exactly as written
+            - The word "$wordList" MUST appear in the sentence exactly as written$topicContext
             - You may add common words (particles, verbs, adjectives) to make the sentence grammatically correct
             - Use appropriate kanji with hiragana/katakana
             - Aim for 5-15 characters
@@ -82,14 +87,15 @@ class OllamaService(
         """.trimIndent()
     }
 
-    private fun buildLongerSentencePrompt(words: List<Word>): String {
+    private fun buildLongerSentencePrompt(words: List<Word>, topic: String?): String {
         val wordList = words.joinToString(", ") { it.japanese }
+        val topicContext = topic?.let { "\n            - The sentence should be about or related to: $it" } ?: ""
         return """
             Create a natural Japanese sentence that MUST include at least one of these words: $wordList
 
             Guidelines:
             - Write an intermediate level sentence
-            - At least one word from the list MUST appear exactly as written
+            - At least one word from the list MUST appear exactly as written$topicContext
             - You may add common vocabulary to make it natural and meaningful
             - Use appropriate kanji, hiragana, and katakana
             - Aim for 12-25 characters
@@ -100,14 +106,15 @@ class OllamaService(
         """.trimIndent()
     }
 
-    private fun buildStoryPrompt(words: List<Word>): String {
+    private fun buildStoryPrompt(words: List<Word>, topic: String?): String {
         val wordList = words.joinToString(", ") { it.japanese }
+        val topicContext = topic?.let { "\n            - The story should be about or related to: $it" } ?: ""
         return """
             Create a short Japanese story using these words: $wordList
 
             IMPORTANT REQUIREMENTS:
             - The story MUST have at least 3 sentences, preferably 3-4 sentences (use periods 。 to separate them)
-            - At least one word from the list MUST appear exactly as written
+            - At least one word from the list MUST appear exactly as written$topicContext
             - Write at beginner to intermediate level
             - Use appropriate kanji, hiragana, and katakana
             - Make the sentences form a coherent mini-story with a beginning, middle, and end
@@ -124,8 +131,7 @@ class OllamaService(
             val request = OllamaRequest(
                 model = model,
                 prompt = prompt,
-                stream = false,
-                format = "json"
+                stream = false
             )
 
             val httpRequest = HttpRequest.POST("/api/generate", request)
@@ -183,8 +189,7 @@ class OllamaService(
             val request = OllamaRequest(
                 model = model,
                 prompt = prompt,
-                stream = false,
-                format = "json"
+                stream = false
             )
 
             val httpRequest = HttpRequest.POST("/api/generate", request)
@@ -220,11 +225,18 @@ class OllamaService(
 
             Japanese text: $japaneseText
 
-            For each meaningful word, particle, or phrase in the text, provide its English meaning or grammatical function.
-            Include:
-            - Nouns, verbs, adjectives, adverbs
-            - Particles and their grammatical function (e.g., "は" -> "topic marker (wa)")
-            - Common expressions
+            CRITICAL: Break down the text into INDIVIDUAL TOKENS. Do NOT combine words together.
+            - Each kanji/kana character or word should be separate
+            - Particles MUST be separate entries (は, が, を, に, で, と, も, の, etc.)
+            - Do NOT combine particles with words (e.g., "私は" should be TWO entries: "私" and "は")
+            - For verb conjugations, provide the conjugated form as it appears
+            - For compound words, if they appear as one unit, keep them together
+            - IGNORE punctuation marks (。、！？) - do not include them in the output
+
+            Include translations for:
+            - Individual nouns, verbs, adjectives, adverbs
+            - Each particle separately with its grammatical function
+            - Verb endings and auxiliaries (です, ます, た, etc.)
 
             Respond in this exact JSON format only:
             {
@@ -240,6 +252,14 @@ class OllamaService(
               "学生": "student",
               "です": "to be (polite)"
             }
+
+            Example for "猫が好きです":
+            {
+              "猫": "cat",
+              "が": "subject marker (ga)",
+              "好き": "like, favorite",
+              "です": "to be (polite)"
+            }
         """.trimIndent()
     }
 
@@ -248,8 +268,7 @@ class OllamaService(
             val request = OllamaRequest(
                 model = model,
                 prompt = prompt,
-                stream = false,
-                format = "json"
+                stream = false
             )
 
             val httpRequest = HttpRequest.POST("/api/generate", request)
@@ -268,6 +287,71 @@ class OllamaService(
         } catch (e: Exception) {
             logger.error("Failed to parse translations response: $response", e)
             emptyMap()
+        }
+    }
+
+    private fun buildTopicSuggestionsPrompt(): String {
+        return """
+            Generate 5 random and diverse topics that are interesting and creative.
+
+            Guidelines:
+            - Make topics varied and unexpected - don't just stick to typical Japanese learning themes
+            - Include completely different categories: nature, technology, emotions, activities, places, objects, etc.
+            - Topics can be abstract or concrete
+            - Keep topics simple and evocative (2-4 words)
+            - Be creative and surprising with your choices
+
+            Respond in this exact JSON format only:
+            {"topics": ["topic1", "topic2", "topic3", "topic4", "topic5"]}
+
+            Example:
+            {"topics": ["Mountain climbing", "Video games", "Rainy days", "Robot dreams", "Old bookstores"]}
+        """.trimIndent()
+    }
+
+    private fun generateTopics(prompt: String): List<String> {
+        try {
+            val request = OllamaRequest(
+                model = model,
+                prompt = prompt,
+                stream = false
+            )
+
+            val httpRequest = HttpRequest.POST("/api/generate", request)
+            val response = httpClient.toBlocking().retrieve(httpRequest, OllamaResponse::class.java)
+
+            return parseTopicsResponse(response.response)
+        } catch (e: Exception) {
+            logger.error("Failed to generate topics from Ollama", e)
+            // Return random fallback topics
+            val allFallbackTopics = listOf(
+                "Starry nights", "Coffee shops", "Video games", "Mountain hiking",
+                "Childhood memories", "Ocean waves", "City lights", "Winter sports",
+                "Street markets", "Space exploration", "Ancient ruins", "Thunderstorms",
+                "Music festivals", "Desert landscapes", "River boats", "Ghost stories",
+                "Art museums", "Spring flowers", "Martial arts", "Train stations",
+                "Busy mornings", "Silent libraries", "Beach sunsets", "Garden parties"
+            )
+            return allFallbackTopics.shuffled().take(5)
+        }
+    }
+
+    private fun parseTopicsResponse(response: String): List<String> {
+        return try {
+            val result: Map<String, List<String>> = objectMapper.readValue(response)
+            result["topics"] ?: emptyList()
+        } catch (e: Exception) {
+            logger.error("Failed to parse topics response: $response", e)
+            // Return random fallback topics
+            val allFallbackTopics = listOf(
+                "Starry nights", "Coffee shops", "Video games", "Mountain hiking",
+                "Childhood memories", "Ocean waves", "City lights", "Winter sports",
+                "Street markets", "Space exploration", "Ancient ruins", "Thunderstorms",
+                "Music festivals", "Desert landscapes", "River boats", "Ghost stories",
+                "Art museums", "Spring flowers", "Martial arts", "Train stations",
+                "Busy mornings", "Silent libraries", "Beach sunsets", "Garden parties"
+            )
+            allFallbackTopics.shuffled().take(5)
         }
     }
 }

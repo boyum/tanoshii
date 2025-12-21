@@ -9,6 +9,7 @@ enum class Difficulty {
 data class Session(
     val id: String,
     val difficulty: Difficulty,
+    val topic: String? = null,
     val createdAt: Instant = Instant.now(),
     val completedAt: Instant? = null,
     val currentTaskIndex: Int = 0

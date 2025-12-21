@@ -34,7 +34,7 @@ flyway:
 
 ollama:
   base-url: http://localhost:11434
-  model: qwen2.5
+  model: qwen2.5:7b
 
 audio:
   cache-dir: audio-cache

@@ -14,7 +14,7 @@
     <section class="start-section">
         <h2><span class="icon">📖</span> Reading Practice</h2>
 
-        <form hx-post="/api/session/start" hx-swap="none" class="difficulty-form">
+        <form id="difficulty-form" class="difficulty-form">
             <div class="difficulty-options">
                 <label class="difficulty-option">
                     <input type="radio" name="difficulty" value="easy" checked>
@@ -50,8 +50,8 @@
                 </label>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-large" onclick="showSplash()">
-                Start Session
+            <button type="button" class="btn btn-primary btn-large" onclick="showTopicSelection()">
+                Choose Topic & Start
             </button>
         </form>
     </section>
@@ -88,6 +88,40 @@
         </a>
     </section>
 
+    <!-- Topic selection modal -->
+    <div id="topic-modal" class="topic-modal">
+        <div class="topic-modal-content">
+            <h2>Choose a Topic</h2>
+            <p class="topic-subtitle">Select a topic for your practice session, or continue without one</p>
+
+            <div id="topic-suggestions" class="topic-suggestions">
+                <div class="topic-loading">
+                    <div class="topic-spinner"></div>
+                    <p id="topic-loading-text">Generating topic suggestions...</p>
+                </div>
+            </div>
+
+            <div class="topic-custom">
+                <label for="custom-topic">Or enter your own topic:</label>
+                <input
+                    type="text"
+                    id="custom-topic"
+                    placeholder="e.g., Cooking, Sports, Technology"
+                    maxlength="50"
+                />
+            </div>
+
+            <div class="topic-actions">
+                <button type="button" class="btn btn-secondary" onclick="skipTopic()">
+                    Skip Topic
+                </button>
+                <button type="button" class="btn btn-primary" onclick="startWithTopic()">
+                    Start Session
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Splash screen overlay -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
@@ -115,15 +149,178 @@
             "Arranging the zen garden...",
         ];
 
+        const topicLoadingTexts = [
+            "Generating topic suggestions...",
+            "Brainstorming creative ideas...",
+            "Exploring interesting themes...",
+            "Thinking outside the box...",
+            "Shuffling possibility cards...",
+            "Consulting the idea oracle...",
+            "Spinning the wheel of topics...",
+            "Collecting interesting concepts...",
+            "Searching for inspiration...",
+            "Mixing up conversation starters...",
+            "Dreaming up new themes...",
+            "Gathering creative sparks...",
+        ];
+
         let splashTimeout = null;
         let hintInterval = null;
+        let topicInterval = null;
+        let selectedTopic = null;
+
+        function showTopicSelection() {
+            const modal = document.getElementById('topic-modal');
+            modal.style.display = 'flex';
+            fetchTopicSuggestions();
+        }
+
+        function rotateTopicLoadingText() {
+            const textEl = document.getElementById('topic-loading-text');
+            if (!textEl) return;
+
+            const randomText = topicLoadingTexts[Math.floor(Math.random() * topicLoadingTexts.length)];
+            textEl.style.opacity = '0';
+            setTimeout(() => {
+                textEl.textContent = randomText;
+                textEl.style.opacity = '1';
+            }, 300);
+        }
+
+        async function fetchTopicSuggestions() {
+            const container = document.getElementById('topic-suggestions');
+
+            // Start rotating loading texts
+            rotateTopicLoadingText();
+            topicInterval = setInterval(rotateTopicLoadingText, 2500);
+
+            try {
+                const response = await fetch('/api/session/topics');
+                const data = await response.json();
+
+                // Stop rotating loading texts
+                if (topicInterval) {
+                    clearInterval(topicInterval);
+                    topicInterval = null;
+                }
+
+                // Create topic cards with View Transition API
+                const updateContent = () => {
+                    container.innerHTML = data.topics.map(topic =>
+                        `<button type="button" class="topic-card" onclick="selectTopic('${topic}')">
+                            ${topic}
+                        </button>`
+                    ).join('');
+                };
+
+                // Use View Transitions API if supported
+                if (document.startViewTransition) {
+                    document.startViewTransition(updateContent);
+                } else {
+                    updateContent();
+                }
+            } catch (error) {
+                console.error('Failed to fetch topics:', error);
+
+                // Stop rotating loading texts
+                if (topicInterval) {
+                    clearInterval(topicInterval);
+                    topicInterval = null;
+                }
+
+                const updateError = () => {
+                    container.innerHTML = '<p class="topic-error">Failed to load topics. You can enter your own below.</p>';
+                };
+
+                // Use View Transitions API if supported
+                if (document.startViewTransition) {
+                    document.startViewTransition(updateError);
+                } else {
+                    updateError();
+                }
+            }
+        }
+
+        function selectTopic(topic) {
+            // Deselect all cards
+            document.querySelectorAll('.topic-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Select clicked card
+            event.target.classList.add('selected');
+            selectedTopic = topic;
+
+            // Clear custom input if a suggestion was selected
+            document.getElementById('custom-topic').value = '';
+        }
+
+        function skipTopic() {
+            selectedTopic = null;
+            document.getElementById('custom-topic').value = '';
+            startSession();
+        }
+
+        function startWithTopic() {
+            // Use custom topic if entered, otherwise use selected suggestion
+            const customTopic = document.getElementById('custom-topic').value.trim();
+            selectedTopic = customTopic || selectedTopic;
+            startSession();
+        }
+
+        function startSession() {
+            // Get selected difficulty
+            const difficulty = document.querySelector('input[name="difficulty"]:checked')?.value || 'easy';
+
+            // Build form data
+            const formData = new URLSearchParams();
+            formData.append('difficulty', difficulty);
+            if (selectedTopic) {
+                formData.append('topic', selectedTopic);
+            }
+
+            // Close modal
+            document.getElementById('topic-modal').style.display = 'none';
+
+            // Show splash screen
+            showSplash();
+
+            // Submit to server
+            fetch('/api/session/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData.toString()
+            })
+            .then(response => {
+                const redirectUrl = response.headers.get('HX-Redirect');
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            })
+            .catch(error => {
+                console.error('Failed to start session:', error);
+                alert('Failed to start session. Please try again.');
+                document.getElementById('splash-screen').classList.remove('visible');
+            });
+        }
 
         function showSplash() {
             // Only show splash after 200ms delay
             splashTimeout = setTimeout(() => {
-                document.getElementById('splash-screen').classList.add('visible');
-                rotateHints();
-                hintInterval = setInterval(rotateHints, 3000);
+                const showSplashScreen = () => {
+                    document.getElementById('splash-screen').classList.add('visible');
+                    rotateHints();
+                    hintInterval = setInterval(rotateHints, 3000);
+                };
+
+                // Use View Transitions API if supported
+                if (document.startViewTransition) {
+                    document.startViewTransition(showSplashScreen);
+                } else {
+                    showSplashScreen();
+                }
             }, 200);
         }
 

@@ -29,14 +29,26 @@ class SessionController(
     @Named(TaskExecutors.IO) private val executorService: ExecutorService
 ) {
 
+    @Get("/api/session/topics")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ExecuteOn(TaskExecutors.BLOCKING)
+    fun getTopicSuggestions(): Map<String, List<String>> {
+        val topics = ollamaService.generateTopicSuggestions()
+        return mapOf("topics" to topics)
+    }
+
     @Post("/api/session/start")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @ExecuteOn(TaskExecutors.BLOCKING)
-    fun startSession(difficulty: String?): HttpResponse<*> {
+    fun startSession(difficulty: String?, topic: String?): HttpResponse<*> {
         val difficultyEnum = Difficulty.valueOf((difficulty ?: "easy").uppercase())
 
         val sessionId = UUID.randomUUID().toString()
-        val session = Session(id = sessionId, difficulty = difficultyEnum)
+        val session = Session(
+            id = sessionId,
+            difficulty = difficultyEnum,
+            topic = topic?.takeIf { it.isNotBlank() }
+        )
         sessionRepository.save(session)
 
         // Generate first task synchronously (user sees it immediately)

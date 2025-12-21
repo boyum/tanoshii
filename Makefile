@@ -73,7 +73,7 @@ init-mac:
 	@echo "✓ Python dependencies installed"
 	@echo ""
 	@# Start Ollama and pull model
-	@echo "Starting Ollama and pulling qwen2.5 model..."
+	@echo "Starting Ollama and pulling qwen model..."
 	@if ! pgrep -x "ollama" > /dev/null; then \
 		ollama serve > /dev/null 2>&1 & \
 		sleep 3; \
@@ -98,7 +98,7 @@ setup:
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -r scripts/requirements.txt
 	@echo ""
-	@echo "Pulling qwen2.5 model for Ollama..."
+	@echo "Pulling qwen model for Ollama..."
 	ollama pull qwen2.5:7b
 	@echo ""
 	@echo "Setup complete!"
@@ -121,9 +121,9 @@ start-ollama:
 	fi
 	make pull-qwen
 
-# Fetch qwen2.5 model
+# Fetch qwen model
 pull-qwen:
-	@echo "Pulling qwen2.5 model for Ollama..."
+	@echo "Pulling qwen model for Ollama..."
 	ollama pull qwen2.5:7b
 
 # Start just the app (assumes Ollama is running)
