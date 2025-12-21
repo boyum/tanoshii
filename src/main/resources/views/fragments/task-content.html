@@ -6,16 +6,6 @@
       class="task-content"
       th:data-task-index="${taskIndex}"
     >
-      <div
-        class="task-badge"
-        th:classappend="${task.taskType.name().toLowerCase()}"
-      >
-        <span
-          th:text="${task.taskType.name() == 'STORY' ? 'Story' : 'Sentence'}"
-          >Sentence</span
-        >
-      </div>
-
       <!-- Reading aid toggles -->
       <div class="reading-toggles">
         <button
@@ -25,7 +15,9 @@
           onclick="toggleWords(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show words <kbd class="key-hint">W</kbd></span>
+          <span class="toggle-label"
+            >Show words <kbd class="key-hint">W</kbd></span
+          >
         </button>
         <button
           type="button"
@@ -34,7 +26,9 @@
           onclick="toggleAutoplay(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Auto-play audio <kbd class="key-hint">A</kbd></span>
+          <span class="toggle-label"
+            >Auto-play audio <kbd class="key-hint">A</kbd></span
+          >
         </button>
         <button
           type="button"
@@ -43,7 +37,9 @@
           onclick="toggleFurigana(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show furigana <kbd class="key-hint">F</kbd></span>
+          <span class="toggle-label"
+            >Show furigana <kbd class="key-hint">F</kbd></span
+          >
         </button>
         <button
           type="button"
@@ -52,7 +48,9 @@
           onclick="toggleRomaji(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show romaji <kbd class="key-hint">R</kbd></span>
+          <span class="toggle-label"
+            >Show romaji <kbd class="key-hint">R</kbd></span
+          >
         </button>
         <button
           type="button"
@@ -61,8 +59,20 @@
           onclick="toggleTooltips(); event.stopPropagation();"
         >
           <span class="toggle-indicator"></span>
-          <span class="toggle-label">Show translations <kbd class="key-hint">T</kbd></span>
+          <span class="toggle-label"
+            >Show translations <kbd class="key-hint">T</kbd></span
+          >
         </button>
+      </div>
+
+      <div
+        class="task-badge"
+        th:classappend="${task.taskType.name().toLowerCase()}"
+      >
+        <span
+          th:text="${task.taskType.name() == 'STORY' ? 'Story' : 'Sentence'}"
+          >Sentence</span
+        >
       </div>
 
       <!-- Japanese text with word-by-word romaji -->
@@ -131,7 +141,9 @@
             <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
           </svg>
         </button>
-        <span class="audio-hint">Press <kbd class="key-hint">Space</kbd> to play</span>
+        <span class="audio-hint"
+          >Press <kbd class="key-hint">Space</kbd> to play</span
+        >
       </div>
 
       <!-- Answer input -->
@@ -268,7 +280,8 @@
         const furiganaEnabled =
           localStorage.getItem("furiganaEnabled") !== "false";
         const romajiEnabled = localStorage.getItem("romajiEnabled") !== "false";
-        const tooltipsEnabled = localStorage.getItem("tooltipsEnabled") !== "false";
+        const tooltipsEnabled =
+          localStorage.getItem("tooltipsEnabled") !== "false";
 
         // Update toggle buttons
         const wordsBtn = document.getElementById("toggle-words");

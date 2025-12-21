@@ -81,6 +81,7 @@ class OllamaService(
             - You may add common words (particles, verbs, adjectives) to make the sentence grammatically correct
             - Use appropriate kanji with hiragana/katakana
             - Aim for 5-15 characters
+            - End with ONLY ONE punctuation mark (。 or ！ or ？, never multiple)
 
             Respond in this exact JSON format only:
             {"japanese": "日本語の文", "english": "English translation"}
@@ -100,6 +101,7 @@ class OllamaService(
             - Use appropriate kanji, hiragana, and katakana
             - Aim for 12-25 characters
             - Make it interesting or useful for daily life
+            - End with ONLY ONE punctuation mark (。 or ！ or ？, never multiple)
 
             Respond in this exact JSON format only:
             {"japanese": "日本語の文", "english": "English translation"}
@@ -118,6 +120,7 @@ class OllamaService(
             - Write at beginner to intermediate level
             - Use appropriate kanji, hiragana, and katakana
             - Make the sentences form a coherent mini-story with a beginning, middle, and end
+            - Each sentence must end with ONLY ONE punctuation mark (。 or ！ or ？, never multiple like ！。)
 
             Example structure: [Setup sentence]。[Development sentence]。[More development/action]。[Conclusion sentence]。
 
@@ -150,7 +153,10 @@ class OllamaService(
 
     private fun parseResponse(response: String): TaskContent {
         return try {
-            objectMapper.readValue(response)
+            val content: TaskContent = objectMapper.readValue(response)
+            // Clean up punctuation issues in Japanese text
+            val cleanedJapanese = cleanupPunctuation(content.japanese)
+            content.copy(japanese = cleanedJapanese)
         } catch (e: Exception) {
             logger.error("Failed to parse Ollama response: $response", e)
             TaskContent(
@@ -158,6 +164,26 @@ class OllamaService(
                 english = "Parse error"
             )
         }
+    }
+
+    /**
+     * Clean up common punctuation issues in Japanese text:
+     * - Remove duplicate sentence-ending punctuation (e.g., "！。" -> "！")
+     * - Remove extra periods after other punctuation
+     */
+    private fun cleanupPunctuation(text: String): String {
+        return text
+            // Remove period after exclamation/question marks
+            .replace(Regex("！。+"), "！")
+            .replace(Regex("？。+"), "？")
+            // Remove duplicate periods
+            .replace(Regex("。+"), "。")
+            // Remove duplicate exclamation marks
+            .replace(Regex("！+"), "！")
+            // Remove duplicate question marks
+            .replace(Regex("？+"), "？")
+            // Remove period before exclamation/question marks
+            .replace(Regex("。+([！？])"), "$1")
     }
 
     private fun buildCheckAnswerPrompt(japaneseText: String, correctTranslation: String, userAnswer: String): String {
