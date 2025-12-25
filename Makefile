@@ -103,11 +103,11 @@ init-mac:
 	@echo "" >> .env
 	@echo "# To use Google Gemini instead:" >> .env
 	@echo "# 1. Get API key from https://aistudio.google.com/app/apikey" >> .env
-	@echo "# 2. Uncomment and set:" >> .env
+	@echo "# 2. Change to:" >> .env
 	@echo "# LLM_PROVIDER=gemini" >> .env
-	@echo "# LLM_BASE_URL=https://generativelanguage.googleapis.com" >> .env
-	@echo "# LLM_MODEL=gemini-1.5-flash" >> .env
+	@echo "# LLM_MODEL=gemini-2.5-flash" >> .env
 	@echo "# GOOGLE_AI_API_KEY=your-api-key-here" >> .env
+	@echo "# (LLM_BASE_URL is not used with Gemini SDK)" >> .env
 	@echo "✓ .env file created"
 	@echo ""
 	@echo "To start the app, run:"
@@ -174,7 +174,8 @@ start-with-ollama: start-ollama
 start-with-gemini:
 	@echo "Starting Tanoshii with Google Gemini..."
 	@echo "Provider: Gemini (cloud)"
-	@echo "Model: gemini-1.5-flash"
+	@echo "Model: gemini-2.5-flash"
+	@echo "Using: Official Google Generative AI SDK"
 	@echo ""
 	@if [ -z "$$GOOGLE_AI_API_KEY" ]; then \
 		echo "ERROR: GOOGLE_AI_API_KEY not set!"; \
@@ -188,7 +189,7 @@ start-with-gemini:
 		echo ""; \
 		exit 1; \
 	fi
-	LLM_PROVIDER=gemini LLM_BASE_URL=https://generativelanguage.googleapis.com LLM_MODEL=gemini-1.5-flash LLM_API_KEY=$$GOOGLE_AI_API_KEY ./gradlew run
+	LLM_PROVIDER=gemini LLM_MODEL=gemini-2.5-flash LLM_API_KEY=$$GOOGLE_AI_API_KEY ./gradlew run
 
 # Start Ollama in background
 start-ollama:
@@ -217,7 +218,7 @@ dev:
 	@# Check provider
 	@if [ -n "$$GOOGLE_AI_API_KEY" ] && [ "$$GOOGLE_AI_API_KEY" != "" ]; then \
 		echo "Starting in development mode with Gemini..."; \
-		LLM_PROVIDER=gemini LLM_BASE_URL=https://generativelanguage.googleapis.com LLM_MODEL=gemini-1.5-flash LLM_API_KEY=$$GOOGLE_AI_API_KEY ./gradlew run -t; \
+		LLM_PROVIDER=gemini LLM_MODEL=gemini-2.5-flash LLM_API_KEY=$$GOOGLE_AI_API_KEY ./gradlew run -t; \
 	else \
 		$(MAKE) start-ollama; \
 		sleep 2; \

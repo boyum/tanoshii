@@ -3,11 +3,14 @@ package com.jpy.wordbook.service
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.genai.Client
+import com.google.genai.types.GenerateContentResponse
+import com.google.genai.types.GenerateContentConfig
 import com.jpy.wordbook.model.Word
 import io.micronaut.context.annotation.Value
 import io.micronaut.http.HttpRequest
 import io.micronaut.http.client.HttpClient
-import io.micronaut.http.client.annotation.Client
+import io.micronaut.http.client.annotation.Client as HttpClientAnnotation
 import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
 
@@ -34,35 +37,64 @@ data class OllamaResponse(
     val response: String
 )
 
-// Gemini API types
-data class GeminiRequest(
-    val contents: List<GeminiContent>
-)
-
-data class GeminiContent(
-    val parts: List<GeminiPart>
-)
-
-data class GeminiPart(
-    val text: String
-)
-
-data class GeminiResponse(
-    val candidates: List<GeminiCandidate>
-)
-
-data class GeminiCandidate(
-    val content: GeminiContent,
-    @JsonProperty("finishReason") val finishReason: String? = null
-)
-
 @Singleton
 class OllamaService(
-    @Client("\${llm.base-url}") private val httpClient: HttpClient,
+    @HttpClientAnnotation("\${llm.base-url}") private val httpClient: HttpClient,
     @Value("\${llm.model}") private val model: String,
     @Value("\${llm.provider:ollama}") private val provider: String,
     @Value("\${llm.api-key:}") private val apiKey: String
 ) {
+    companion object {
+        private val FALLBACK_TOPICS = listOf(
+            // Nature & Weather
+            "Starry nights", "Ocean waves", "Thunderstorms", "Spring flowers", "Beach sunsets",
+            "Mountain hiking", "Desert landscapes", "Autumn leaves", "Cherry blossoms", "Tropical rainforests",
+            "Northern lights", "Full moon", "Rainbow after rain", "Misty mornings", "Snow-covered fields",
+            "Bamboo forests", "Coral reefs", "Wildflower meadows", "Volcanic landscapes", "Foggy mountains",
+
+            // Urban Life
+            "Coffee shops", "City lights", "Train stations", "Busy mornings", "Rooftop views",
+            "Street markets", "Neon signs", "Underground passages", "Rush hour", "Convenience stores",
+            "City parks", "Taxi rides", "Pedestrian crossings", "Skyscrapers", "Bicycle lanes",
+            "Food courts", "Shopping arcades", "Street performers", "City squares", "Night markets",
+
+            // Activities & Hobbies
+            "Video games", "Winter sports", "Martial arts", "Garden parties", "Cooking together",
+            "Board games", "Stargazing", "Photography walks", "Pottery making", "Calligraphy practice",
+            "Fishing trips", "Rock climbing", "Camping adventures", "Bird watching", "Knitting circles",
+            "Dancing lessons", "Karaoke nights", "Origami folding", "Tea ceremonies", "Meditation retreats",
+
+            // Culture & Arts
+            "Music festivals", "Art museums", "Ghost stories", "Ancient ruins", "Theater performances",
+            "Film festivals", "Poetry readings", "Jazz clubs", "Street art", "Opera houses",
+            "Cultural festivals", "Traditional crafts", "Comic books", "Anime conventions", "Folk tales",
+            "Contemporary art", "Historical reenactments", "Puppet shows", "Sculpture gardens", "Dance recitals",
+
+            // Places & Locations
+            "Silent libraries", "Space exploration", "River boats", "Airport terminals", "Old bookstores",
+            "Mountain temples", "Castle ruins", "Hot springs", "Lighthouse keepers", "Harbor views",
+            "Zen gardens", "Village festivals", "Island getaways", "Country roads", "Old neighborhoods",
+            "Seaside towns", "Mountain cabins", "Forest shrines", "Underground caves", "Observatory decks",
+
+            // Daily Life & Moments
+            "Childhood memories", "Morning routines", "Evening walks", "Weekend plans", "Phone calls",
+            "Lost keys", "First dates", "Job interviews", "Moving day", "Birthday surprises",
+            "Study sessions", "Late-night snacks", "Pet adventures", "Family dinners", "Road trips",
+            "Lazy Sundays", "Power outages", "Spring cleaning", "New Year's resolutions", "Grocery shopping",
+
+            // Abstract & Emotional
+            "Distant memories", "Future dreams", "Parallel universes", "Time travel", "Silent wishes",
+            "Hidden talents", "Secret gardens", "Forgotten songs", "Unsent letters", "Stolen moments",
+            "Bittersweet goodbyes", "Second chances", "Broken promises", "Lost friendships", "New beginnings",
+            "Inner peace", "Growing pains", "Cultural identity", "Generation gaps", "Life lessons",
+
+            // Food & Drink
+            "Ramen shops", "Tea time", "Street food", "Farmers markets", "Bakery mornings",
+            "Sushi bars", "Izakaya nights", "Picnic lunches", "Wine tasting", "Home cooking",
+            "Food trucks", "Dessert cafes", "Breakfast traditions", "Dinner parties", "Cooking disasters"
+        )
+    }
+
     private val logger = LoggerFactory.getLogger(OllamaService::class.java)
     private val objectMapper = jacksonObjectMapper()
 
@@ -72,6 +104,13 @@ class OllamaService(
     @Volatile
     private var topicsCacheTime: Long = 0
     private val TOPIC_CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes
+
+    // Lazy initialize Gemini client only when needed
+    private val geminiClient: Client by lazy {
+        Client.builder()
+            .apiKey(apiKey)
+            .build()
+    }
 
     fun generateSentence(words: List<Word>, topic: String? = null): TaskContent {
         val prompt = buildSentencePrompt(words, topic)
@@ -247,26 +286,23 @@ class OllamaService(
 
     private fun generateWithGemini(prompt: String): TaskContent {
         try {
-            val request = GeminiRequest(
-                contents = listOf(
-                    GeminiContent(
-                        parts = listOf(GeminiPart(text = prompt))
-                    )
-                )
+            logger.debug("Calling Gemini with model: $model")
+
+            // Use the official Google Gen AI SDK with default config
+            val config = GenerateContentConfig.builder().build()
+            val response: GenerateContentResponse = geminiClient.models.generateContent(
+                model,
+                prompt,
+                config
             )
 
-            // Gemini API endpoint format
-            val endpoint = "/v1beta/models/$model:generateContent?key=$apiKey"
-            val httpRequest = HttpRequest.POST(endpoint, request)
-            val response = httpClient.toBlocking().retrieve(httpRequest, GeminiResponse::class.java)
-
-            // Extract text from first candidate
-            val text = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text
-                ?: throw Exception("No response from Gemini")
+            // Extract text from response
+            val text = response.text() ?: throw Exception("No response from Gemini")
 
             return parseResponse(text)
         } catch (e: Exception) {
-            logger.error("Failed to generate content from Gemini", e)
+            logger.error("Failed to generate content from Gemini with model '$model'", e)
+            logger.error("Error type: ${e.javaClass.name}, message: ${e.message}")
             return TaskContent(
                 japanese = "エラーが発生しました。",
                 english = "An error occurred."
@@ -274,9 +310,22 @@ class OllamaService(
         }
     }
 
+    /**
+     * Strip markdown code blocks from LLM responses.
+     * Gemini often wraps JSON in ```json ... ``` blocks.
+     */
+    private fun stripMarkdownCodeBlocks(response: String): String {
+        return response.trim()
+            .removePrefix("```json")
+            .removePrefix("```")
+            .removeSuffix("```")
+            .trim()
+    }
+
     private fun parseResponse(response: String): TaskContent {
         return try {
-            val content: TaskContent = objectMapper.readValue(response)
+            val cleanedResponse = stripMarkdownCodeBlocks(response)
+            val content: TaskContent = objectMapper.readValue(cleanedResponse)
             // Clean up punctuation issues in Japanese text
             val cleanedJapanese = cleanupPunctuation(content.japanese)
             content.copy(japanese = cleanedJapanese)
@@ -334,6 +383,17 @@ class OllamaService(
     }
 
     private fun generateFeedback(prompt: String): AnswerFeedback {
+        return when (provider.lowercase()) {
+            "gemini" -> generateFeedbackWithGemini(prompt)
+            "ollama" -> generateFeedbackWithOllama(prompt)
+            else -> {
+                logger.warn("Unknown provider '$provider', falling back to Ollama")
+                generateFeedbackWithOllama(prompt)
+            }
+        }
+    }
+
+    private fun generateFeedbackWithOllama(prompt: String): AnswerFeedback {
         try {
             val request = OllamaRequest(
                 model = model,
@@ -355,9 +415,31 @@ class OllamaService(
         }
     }
 
+    private fun generateFeedbackWithGemini(prompt: String): AnswerFeedback {
+        try {
+            val config = GenerateContentConfig.builder().build()
+            val response: GenerateContentResponse = geminiClient.models.generateContent(
+                model,
+                prompt,
+                config
+            )
+
+            val text = response.text() ?: throw Exception("No response from Gemini")
+            return parseFeedbackResponse(text)
+        } catch (e: Exception) {
+            logger.error("Failed to generate feedback from Gemini", e)
+            return AnswerFeedback(
+                correct = false,
+                feedback = "Unable to check answer at this time.",
+                suggestion = "Please try again later."
+            )
+        }
+    }
+
     private fun parseFeedbackResponse(response: String): AnswerFeedback {
         return try {
-            objectMapper.readValue(response)
+            val cleanedResponse = stripMarkdownCodeBlocks(response)
+            objectMapper.readValue(cleanedResponse)
         } catch (e: Exception) {
             logger.error("Failed to parse feedback response: $response", e)
             AnswerFeedback(
@@ -413,6 +495,17 @@ class OllamaService(
     }
 
     private fun generateTranslations(prompt: String): Map<String, String> {
+        return when (provider.lowercase()) {
+            "gemini" -> generateTranslationsWithGemini(prompt)
+            "ollama" -> generateTranslationsWithOllama(prompt)
+            else -> {
+                logger.warn("Unknown provider '$provider', falling back to Ollama")
+                generateTranslationsWithOllama(prompt)
+            }
+        }
+    }
+
+    private fun generateTranslationsWithOllama(prompt: String): Map<String, String> {
         try {
             val request = OllamaRequest(
                 model = model,
@@ -430,9 +523,27 @@ class OllamaService(
         }
     }
 
+    private fun generateTranslationsWithGemini(prompt: String): Map<String, String> {
+        try {
+            val config = GenerateContentConfig.builder().build()
+            val response: GenerateContentResponse = geminiClient.models.generateContent(
+                model,
+                prompt,
+                config
+            )
+
+            val text = response.text() ?: throw Exception("No response from Gemini")
+            return parseTranslationsResponse(text)
+        } catch (e: Exception) {
+            logger.error("Failed to generate word translations from Gemini", e)
+            return emptyMap()
+        }
+    }
+
     private fun parseTranslationsResponse(response: String): Map<String, String> {
         return try {
-            objectMapper.readValue(response)
+            val cleanedResponse = stripMarkdownCodeBlocks(response)
+            objectMapper.readValue(cleanedResponse)
         } catch (e: Exception) {
             logger.error("Failed to parse translations response: $response", e)
             emptyMap()
@@ -459,6 +570,17 @@ class OllamaService(
     }
 
     private fun generateTopics(prompt: String): List<String> {
+        return when (provider.lowercase()) {
+            "gemini" -> generateTopicsWithGemini(prompt)
+            "ollama" -> generateTopicsWithOllama(prompt)
+            else -> {
+                logger.warn("Unknown provider '$provider', falling back to Ollama")
+                generateTopicsWithOllama(prompt)
+            }
+        }
+    }
+
+    private fun generateTopicsWithOllama(prompt: String): List<String> {
         try {
             val request = OllamaRequest(
                 model = model,
@@ -472,115 +594,35 @@ class OllamaService(
             return parseTopicsResponse(response.response)
         } catch (e: Exception) {
             logger.error("Failed to generate topics from Ollama", e)
-            // Return random fallback topics
-            val allFallbackTopics = listOf(
-                // Nature & Weather
-                "Starry nights", "Ocean waves", "Thunderstorms", "Spring flowers", "Beach sunsets",
-                "Mountain hiking", "Desert landscapes", "Autumn leaves", "Cherry blossoms", "Tropical rainforests",
-                "Northern lights", "Full moon", "Rainbow after rain", "Misty mornings", "Snow-covered fields",
-                "Bamboo forests", "Coral reefs", "Wildflower meadows", "Volcanic landscapes", "Foggy mountains",
+            return FALLBACK_TOPICS.shuffled().take(5)
+        }
+    }
 
-                // Urban Life
-                "Coffee shops", "City lights", "Train stations", "Busy mornings", "Rooftop views",
-                "Street markets", "Neon signs", "Underground passages", "Rush hour", "Convenience stores",
-                "City parks", "Taxi rides", "Pedestrian crossings", "Skyscrapers", "Bicycle lanes",
-                "Food courts", "Shopping arcades", "Street performers", "City squares", "Night markets",
-
-                // Activities & Hobbies
-                "Video games", "Winter sports", "Martial arts", "Garden parties", "Cooking together",
-                "Board games", "Stargazing", "Photography walks", "Pottery making", "Calligraphy practice",
-                "Fishing trips", "Rock climbing", "Camping adventures", "Bird watching", "Knitting circles",
-                "Dancing lessons", "Karaoke nights", "Origami folding", "Tea ceremonies", "Meditation retreats",
-
-                // Culture & Arts
-                "Music festivals", "Art museums", "Ghost stories", "Ancient ruins", "Theater performances",
-                "Film festivals", "Poetry readings", "Jazz clubs", "Street art", "Opera houses",
-                "Cultural festivals", "Traditional crafts", "Comic books", "Anime conventions", "Folk tales",
-                "Contemporary art", "Historical reenactments", "Puppet shows", "Sculpture gardens", "Dance recitals",
-
-                // Places & Locations
-                "Silent libraries", "Space exploration", "River boats", "Airport terminals", "Old bookstores",
-                "Mountain temples", "Castle ruins", "Hot springs", "Lighthouse keepers", "Harbor views",
-                "Zen gardens", "Village festivals", "Island getaways", "Country roads", "Old neighborhoods",
-                "Seaside towns", "Mountain cabins", "Forest shrines", "Underground caves", "Observatory decks",
-
-                // Daily Life & Moments
-                "Childhood memories", "Morning routines", "Evening walks", "Weekend plans", "Phone calls",
-                "Lost keys", "First dates", "Job interviews", "Moving day", "Birthday surprises",
-                "Study sessions", "Late-night snacks", "Pet adventures", "Family dinners", "Road trips",
-                "Lazy Sundays", "Power outages", "Spring cleaning", "New Year's resolutions", "Grocery shopping",
-
-                // Abstract & Emotional
-                "Distant memories", "Future dreams", "Parallel universes", "Time travel", "Silent wishes",
-                "Hidden talents", "Secret gardens", "Forgotten songs", "Unsent letters", "Stolen moments",
-                "Bittersweet goodbyes", "Second chances", "Broken promises", "Lost friendships", "New beginnings",
-                "Inner peace", "Growing pains", "Cultural identity", "Generation gaps", "Life lessons",
-
-                // Food & Drink
-                "Ramen shops", "Tea time", "Street food", "Farmers markets", "Bakery mornings",
-                "Sushi bars", "Izakaya nights", "Picnic lunches", "Wine tasting", "Home cooking",
-                "Food trucks", "Dessert cafes", "Breakfast traditions", "Dinner parties", "Cooking disasters"
+    private fun generateTopicsWithGemini(prompt: String): List<String> {
+        try {
+            val config = GenerateContentConfig.builder().build()
+            val response: GenerateContentResponse = geminiClient.models.generateContent(
+                model,
+                prompt,
+                config
             )
-            return allFallbackTopics.shuffled().take(5)
+
+            val text = response.text() ?: throw Exception("No response from Gemini")
+            return parseTopicsResponse(text)
+        } catch (e: Exception) {
+            logger.error("Failed to generate topics from Gemini", e)
+            return FALLBACK_TOPICS.shuffled().take(5)
         }
     }
 
     private fun parseTopicsResponse(response: String): List<String> {
         return try {
-            val result: Map<String, List<String>> = objectMapper.readValue(response)
+            val cleanedResponse = stripMarkdownCodeBlocks(response)
+            val result: Map<String, List<String>> = objectMapper.readValue(cleanedResponse)
             result["topics"] ?: emptyList()
         } catch (e: Exception) {
             logger.error("Failed to parse topics response: $response", e)
-            // Return random fallback topics (same as above in generateTopicSuggestions)
-            val allFallbackTopics = listOf(
-                // Nature & Weather
-                "Starry nights", "Ocean waves", "Thunderstorms", "Spring flowers", "Beach sunsets",
-                "Mountain hiking", "Desert landscapes", "Autumn leaves", "Cherry blossoms", "Tropical rainforests",
-                "Northern lights", "Full moon", "Rainbow after rain", "Misty mornings", "Snow-covered fields",
-                "Bamboo forests", "Coral reefs", "Wildflower meadows", "Volcanic landscapes", "Foggy mountains",
-
-                // Urban Life
-                "Coffee shops", "City lights", "Train stations", "Busy mornings", "Rooftop views",
-                "Street markets", "Neon signs", "Underground passages", "Rush hour", "Convenience stores",
-                "City parks", "Taxi rides", "Pedestrian crossings", "Skyscrapers", "Bicycle lanes",
-                "Food courts", "Shopping arcades", "Street performers", "City squares", "Night markets",
-
-                // Activities & Hobbies
-                "Video games", "Winter sports", "Martial arts", "Garden parties", "Cooking together",
-                "Board games", "Stargazing", "Photography walks", "Pottery making", "Calligraphy practice",
-                "Fishing trips", "Rock climbing", "Camping adventures", "Bird watching", "Knitting circles",
-                "Dancing lessons", "Karaoke nights", "Origami folding", "Tea ceremonies", "Meditation retreats",
-
-                // Culture & Arts
-                "Music festivals", "Art museums", "Ghost stories", "Ancient ruins", "Theater performances",
-                "Film festivals", "Poetry readings", "Jazz clubs", "Street art", "Opera houses",
-                "Cultural festivals", "Traditional crafts", "Comic books", "Anime conventions", "Folk tales",
-                "Contemporary art", "Historical reenactments", "Puppet shows", "Sculpture gardens", "Dance recitals",
-
-                // Places & Locations
-                "Silent libraries", "Space exploration", "River boats", "Airport terminals", "Old bookstores",
-                "Mountain temples", "Castle ruins", "Hot springs", "Lighthouse keepers", "Harbor views",
-                "Zen gardens", "Village festivals", "Island getaways", "Country roads", "Old neighborhoods",
-                "Seaside towns", "Mountain cabins", "Forest shrines", "Underground caves", "Observatory decks",
-
-                // Daily Life & Moments
-                "Childhood memories", "Morning routines", "Evening walks", "Weekend plans", "Phone calls",
-                "Lost keys", "First dates", "Job interviews", "Moving day", "Birthday surprises",
-                "Study sessions", "Late-night snacks", "Pet adventures", "Family dinners", "Road trips",
-                "Lazy Sundays", "Power outages", "Spring cleaning", "New Year's resolutions", "Grocery shopping",
-
-                // Abstract & Emotional
-                "Distant memories", "Future dreams", "Parallel universes", "Time travel", "Silent wishes",
-                "Hidden talents", "Secret gardens", "Forgotten songs", "Unsent letters", "Stolen moments",
-                "Bittersweet goodbyes", "Second chances", "Broken promises", "Lost friendships", "New beginnings",
-                "Inner peace", "Growing pains", "Cultural identity", "Generation gaps", "Life lessons",
-
-                // Food & Drink
-                "Ramen shops", "Tea time", "Street food", "Farmers markets", "Bakery mornings",
-                "Sushi bars", "Izakaya nights", "Picnic lunches", "Wine tasting", "Home cooking",
-                "Food trucks", "Dessert cafes", "Breakfast traditions", "Dinner parties", "Cooking disasters"
-            )
-            allFallbackTopics.shuffled().take(5)
+            return FALLBACK_TOPICS.shuffled().take(5)
         }
     }
 }

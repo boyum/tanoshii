@@ -42,6 +42,9 @@ dependencies {
     // Japanese text processing (furigana, romaji)
     implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
 
+    // Google Generative AI SDK for Gemini
+    implementation("com.google.genai:google-genai:1.32.0")
+
     // Testing
     testImplementation("io.micronaut.test:micronaut-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-api")

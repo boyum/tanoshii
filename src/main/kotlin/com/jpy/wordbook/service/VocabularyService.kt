@@ -241,6 +241,25 @@ class VocabularyService(
 
     fun getRandomWords(count: Int): List<Word> = wordRepository.findRandomWords(count)
 
+    fun getRandomWordsByDifficulty(count: Int, difficulty: com.jpy.wordbook.model.Difficulty): List<Word> {
+        val categoryPrefixes = when (difficulty) {
+            com.jpy.wordbook.model.Difficulty.EASY -> listOf("n5")  // Only N5 words (most basic)
+            com.jpy.wordbook.model.Difficulty.MEDIUM -> listOf("n5", "n4")  // N5 + N4 words
+            com.jpy.wordbook.model.Difficulty.HARD -> listOf("n5", "n4", "n3", "n2", "n1")  // All JLPT levels + custom
+        }
+
+        // Try to get words from the filtered categories
+        val words = wordRepository.findRandomWordsByCategories(count, categoryPrefixes)
+
+        // If we don't have enough words in these categories, fall back to all words
+        return if (words.size < count) {
+            logger.warn("Not enough words in categories $categoryPrefixes (found ${words.size}, needed $count). Falling back to all words.")
+            wordRepository.findRandomWords(count)
+        } else {
+            words
+        }
+    }
+
     fun getWordsByIds(ids: List<Long>): List<Word> = wordRepository.findByIds(ids)
 
     fun getAllWords(): List<Word> = wordRepository.findAll()

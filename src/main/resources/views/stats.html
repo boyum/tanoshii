@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(${title}, ~{::main})}">
+<head>
+    <title>Progress Statistics - Tanoshii</title>
+</head>
+<body>
+<main class="container stats">
+    <header class="stats-header">
+        <a href="/" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Back to Home
+        </a>
+        <h1>📊 Your Progress</h1>
+        <p class="stats-subtitle">Track your Japanese learning journey</p>
+    </header>
+
+    <!-- Key stats -->
+    <section class="stats-overview">
+        <div class="stat-card stat-primary">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-content">
+                <div class="stat-value" th:text="'Level ' + ${currentLevel}">Level 1</div>
+                <div class="stat-label" th:text="${totalXp} + ' Total XP'">0 XP</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">🔥</div>
+            <div class="stat-content">
+                <div class="stat-value" th:text="${streakDays}">0</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-content">
+                <div class="stat-value" th:text="${totalSessions}">0</div>
+                <div class="stat-label">Total Sessions</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">✍️</div>
+            <div class="stat-content">
+                <div class="stat-value" th:text="${totalSentences}">0</div>
+                <div class="stat-label">Sentences Practiced</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Level Progress Section -->
+    <section class="stats-section">
+        <h2>Level Progress</h2>
+        <div class="xp-progress-card">
+            <div class="xp-progress-header">
+                <div class="xp-level-info">
+                    <span class="xp-current-level">Level <strong th:text="${currentLevel}">1</strong></span>
+                    <span class="xp-next-level" th:text="'→ Level ' + (${currentLevel} + 1)">→ Level 2</span>
+                </div>
+                <div class="xp-values">
+                    <span class="xp-current" th:text="${totalXp} + ' XP'">0 XP</span>
+                    <span class="xp-separator">/</span>
+                    <span class="xp-next" th:text="${nextLevelTotalXp} + ' XP'">100 XP</span>
+                </div>
+            </div>
+            <div class="xp-progress-bar">
+                <div class="xp-progress-fill"
+                     th:style="|width: ${levelProgress}%|"></div>
+            </div>
+            <div class="xp-progress-footer">
+                <span th:text="${xpToNextLevel} + ' XP until next level'">100 XP until next level</span>
+            </div>
+        </div>
+
+        <div class="xp-how-to-earn">
+            <h3>💎 How to Earn XP</h3>
+            <div class="xp-activities">
+                <div class="xp-activity">
+                    <span class="xp-activity-icon">📝</span>
+                    <span class="xp-activity-name">Complete Task</span>
+                    <span class="xp-activity-value">+10-20 XP</span>
+                </div>
+                <div class="xp-activity">
+                    <span class="xp-activity-icon">🎯</span>
+                    <span class="xp-activity-name">Finish Session</span>
+                    <span class="xp-activity-value">+50 XP</span>
+                </div>
+                <div class="xp-activity">
+                    <span class="xp-activity-icon">🔥</span>
+                    <span class="xp-activity-name">Daily Streak Bonus</span>
+                    <span class="xp-activity-value">+50 XP</span>
+                </div>
+                <div class="xp-activity">
+                    <span class="xp-activity-icon">📚</span>
+                    <span class="xp-activity-name">Discover New Word</span>
+                    <span class="xp-activity-value">+5 XP</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Word Mastery Progress -->
+    <section class="stats-section">
+        <h2>Word Mastery Progress</h2>
+        <p class="section-subtitle">Track your vocabulary acquisition journey</p>
+
+        <div class="mastery-overview">
+            <div class="mastery-stat-card">
+                <div class="mastery-icon">✅</div>
+                <div class="mastery-content">
+                    <div class="mastery-value" th:text="${masteredCount}">0</div>
+                    <div class="mastery-label">Mastered</div>
+                    <div class="mastery-sublabel">6+ encounters</div>
+                </div>
+            </div>
+
+            <div class="mastery-stat-card">
+                <div class="mastery-icon">📖</div>
+                <div class="mastery-content">
+                    <div class="mastery-value" th:text="${learningCount}">0</div>
+                    <div class="mastery-label">Learning</div>
+                    <div class="mastery-sublabel">3-5 encounters</div>
+                </div>
+            </div>
+
+            <div class="mastery-stat-card">
+                <div class="mastery-icon">👀</div>
+                <div class="mastery-content">
+                    <div class="mastery-value" th:text="${seenCount}">0</div>
+                    <div class="mastery-label">Seen</div>
+                    <div class="mastery-sublabel">1-2 encounters</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mastery-progress-bar-container">
+            <div class="mastery-progress-info">
+                <span class="mastery-progress-label">Overall Mastery Progress</span>
+                <span class="mastery-progress-value">
+                    <strong th:text="${masteredCount}">0</strong> / <span th:text="${totalWords}">1010</span> words
+                    (<span th:text="${masteredPercentage}">0</span>%)
+                </span>
+            </div>
+            <div class="mastery-progress-bar">
+                <div class="mastery-progress-fill mastered"
+                     th:if="${totalWords > 0}"
+                     th:style="|width: ${masteredCount * 100 / totalWords}%|"></div>
+                <div class="mastery-progress-fill learning"
+                     th:if="${totalWords > 0}"
+                     th:style="|width: ${learningCount * 100 / totalWords}%|"></div>
+                <div class="mastery-progress-fill seen"
+                     th:if="${totalWords > 0}"
+                     th:style="|width: ${seenCount * 100 / totalWords}%|"></div>
+            </div>
+            <div class="mastery-progress-legend">
+                <span class="legend-item"><span class="legend-dot mastered"></span> Mastered</span>
+                <span class="legend-item"><span class="legend-dot learning"></span> Learning</span>
+                <span class="legend-item"><span class="legend-dot seen"></span> Seen</span>
+            </div>
+        </div>
+
+        <div class="mastery-encouragement" th:if="${masteredCount == 0}">
+            <p>🌱 Start your journey! Every word you practice brings you closer to mastery.</p>
+        </div>
+        <div class="mastery-encouragement" th:if="${masteredCount > 0 and masteredCount < 50}">
+            <p>🌿 Great start! You've mastered your first words. Keep the momentum going!</p>
+        </div>
+        <div class="mastery-encouragement" th:if="${masteredCount >= 50 and masteredCount < 200}">
+            <p>🌳 Impressive progress! You're building a solid vocabulary foundation.</p>
+        </div>
+        <div class="mastery-encouragement" th:if="${masteredCount >= 200}">
+            <p>🎌 Outstanding! You're well on your way to Japanese fluency!</p>
+        </div>
+    </section>
+
+    <!-- Difficulty breakdown -->
+    <section class="stats-section">
+        <h2>Sessions by Difficulty</h2>
+        <div class="difficulty-breakdown">
+            <div class="difficulty-bar-container">
+                <div class="difficulty-bars">
+                    <div class="difficulty-bar easy"
+                         th:if="${totalSessions > 0}"
+                         th:style="|width: ${easyCount * 100 / totalSessions}%|">
+                        <span class="bar-label" th:if="${easyCount > 0}">Easy: <span th:text="${easyCount}">0</span></span>
+                    </div>
+                    <div class="difficulty-bar medium"
+                         th:if="${totalSessions > 0}"
+                         th:style="|width: ${mediumCount * 100 / totalSessions}%|">
+                        <span class="bar-label" th:if="${mediumCount > 0}">Medium: <span th:text="${mediumCount}">0</span></span>
+                    </div>
+                    <div class="difficulty-bar hard"
+                         th:if="${totalSessions > 0}"
+                         th:style="|width: ${hardCount * 100 / totalSessions}%|">
+                        <span class="bar-label" th:if="${hardCount > 0}">Hard: <span th:text="${hardCount}">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="difficulty-legend">
+                <div class="legend-item">
+                    <span class="legend-dot easy"></span>
+                    <span>Easy: <strong th:text="${easyCount}">0</strong> sessions</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot medium"></span>
+                    <span>Medium: <strong th:text="${mediumCount}">0</strong> sessions</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot hard"></span>
+                    <span>Hard: <strong th:text="${hardCount}">0</strong> sessions</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Top topics -->
+    <section class="stats-section" th:if="${not #lists.isEmpty(topTopics)}">
+        <h2>Your Favorite Topics</h2>
+        <div class="topics-list">
+            <div th:each="entry, iterStat : ${topTopics}" class="topic-item">
+                <span class="topic-rank" th:text="${iterStat.index + 1}">1</span>
+                <span class="topic-name" th:text="${entry.key}">Topic</span>
+                <span class="topic-count" th:text="${entry.value + ' session' + (entry.value > 1 ? 's' : '')}">1 session</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent activity -->
+    <section class="stats-section">
+        <h2>Recent Activity</h2>
+        <div class="activity-list">
+            <div th:each="session : ${recentSessions}" class="activity-item">
+                <div class="activity-date">
+                    <div class="activity-day" th:text="${#temporals.format(session.createdAt, 'dd')}">01</div>
+                    <div class="activity-month" th:text="${#temporals.format(session.createdAt, 'MMM')}">Jan</div>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-header">
+                        <span class="activity-difficulty"
+                              th:classappend="${session.difficulty.name().toLowerCase()}"
+                              th:text="${#strings.capitalize(session.difficulty.name().toLowerCase())}">Easy</span>
+                        <span class="activity-topic" th:if="${session.topic != null}" th:text="${session.topic}">Topic</span>
+                    </div>
+                    <div class="activity-time" th:text="${#temporals.format(session.createdAt, 'HH:mm')}">12:00</div>
+                </div>
+                <a th:href="@{/session/{id}(id=${session.id})}" class="activity-link" title="Continue session">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                    </svg>
+                </a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(recentSessions)}" class="empty-state">
+                <p>No sessions yet. Start your first session to see your progress!</p>
+                <a href="/" class="btn btn-primary">Start Learning</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Motivational footer -->
+    <footer class="stats-footer">
+        <div class="motivation-card">
+            <h3>Keep Going! 💪</h3>
+            <p th:if="${streakDays == 0}">Start a new streak today by completing a session!</p>
+            <p th:if="${streakDays == 1}">Great start! Come back tomorrow to build your streak.</p>
+            <p th:if="${streakDays >= 2 and streakDays < 7}">You're building momentum! <span th:text="${streakDays}">2</span> days strong!</p>
+            <p th:if="${streakDays >= 7 and streakDays < 30}">Amazing dedication! <span th:text="${streakDays}">7</span> days in a row!</p>
+            <p th:if="${streakDays >= 30}">Incredible! You've maintained a <span th:text="${streakDays}">30</span>-day streak! 🎉</p>
+            <a href="/" class="btn btn-primary">Continue Learning</a>
+        </div>
+    </footer>
+</main>
+</body>
+</html>

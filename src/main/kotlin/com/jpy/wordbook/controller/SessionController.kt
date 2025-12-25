@@ -26,6 +26,8 @@ class SessionController(
     private val vocabularyService: VocabularyService,
     private val ollamaService: OllamaService,
     private val japaneseTextService: com.jpy.wordbook.service.JapaneseTextService,
+    private val xpService: com.jpy.wordbook.service.XpService,
+    private val progressService: com.jpy.wordbook.service.ProgressService,
     @Named(TaskExecutors.IO) private val executorService: ExecutorService
 ) {
 
@@ -50,6 +52,9 @@ class SessionController(
             topic = topic?.takeIf { it.isNotBlank() }
         )
         sessionRepository.save(session)
+
+        // Award daily streak bonus if not claimed today
+        xpService.awardStreakBonus()
 
         // Generate first task synchronously (user sees it immediately)
         taskGeneratorService.generateFirstTask(session)
@@ -108,6 +113,24 @@ class SessionController(
         val words = vocabularyService.getWordsByIds(task.wordIds)
         val tasks = taskRepository.findBySessionId(id)
 
+        // Award XP for completing this task
+        val xpGainResult = xpService.awardTaskXp(session.difficulty)
+
+        // Record words seen and award XP for new words
+        progressService.recordWordsSeen(task.wordIds)
+
+        // Progressive task generation: trigger next batch when user is 3 tasks away from the end
+        val generatedCount = tasks.size
+        val totalTasks = taskGeneratorService.getTotalTasksForSession(id)
+        val shouldGenerateMore = index >= generatedCount - 3 && generatedCount < totalTasks
+
+        if (shouldGenerateMore) {
+            // Generate next batch in background
+            executorService.submit {
+                taskGeneratorService.generateNextBatch(session, startIndex = generatedCount, count = 5)
+            }
+        }
+
         // Create vocabulary map (Japanese -> English) for hover tooltips
         // Load ALL vocabulary so every word can show its meaning
         val baseVocabularyMap = vocabularyService.getAllWords().associate { it.japanese to it.english }
@@ -164,6 +187,21 @@ class SessionController(
             "correct" to feedback.correct,
             "feedback" to feedback.feedback,
             "suggestion" to feedback.suggestion
+        )
+    }
+
+    @Get("/session/{id}/print")
+    @View("session-print")
+    fun printSession(@PathVariable id: String): Map<String, Any?> {
+        val session = sessionRepository.findById(id)
+            ?: return mapOf("error" to "Session not found")
+
+        val tasks = taskRepository.findBySessionId(id)
+
+        return mapOf(
+            "title" to "Print Session - Tanoshii",
+            "session" to session,
+            "tasks" to tasks
         )
     }
 }

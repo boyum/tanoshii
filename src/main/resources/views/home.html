@@ -6,9 +6,27 @@
 <body>
 <main class="container home">
     <header class="header">
-        <h1>Tanoshii</h1>
-        <p class="tagline">Learn Japanese, one sentence at a time</p>
-        <p class="tagline-jp">楽しく日本語を学ぼう</p>
+        <div class="header-with-level">
+            <div>
+                <h1>Tanoshii</h1>
+                <p class="tagline">Learn Japanese, one sentence at a time</p>
+                <p class="tagline-jp">楽しく日本語を学ぼう</p>
+            </div>
+            <div class="level-badge">
+                <div class="level-number" th:text="${currentLevel}">1</div>
+                <div class="level-label">Level</div>
+                <div class="level-xp" th:text="${totalXp} + ' XP'">0 XP</div>
+            </div>
+        </div>
+        <div class="level-progress-container">
+            <div class="level-progress-bar">
+                <div class="level-progress-fill"
+                     th:style="|width: ${levelProgress}%|"></div>
+            </div>
+            <div class="level-progress-text">
+                <span th:text="${xpToNextLevel} + ' XP to Level ' + (${currentLevel} + 1)">100 XP to Level 2</span>
+            </div>
+        </div>
     </header>
 
     <section class="start-section">
@@ -22,7 +40,7 @@
                         <span class="difficulty-icon">🌸</span>
                         <div class="difficulty-info">
                             <span class="difficulty-name">Easy</span>
-                            <span class="difficulty-desc">10 short sentences</span>
+                            <span class="difficulty-desc">Basic N5 words only</span>
                         </div>
                     </div>
                 </label>
@@ -33,7 +51,7 @@
                         <span class="difficulty-icon">🎋</span>
                         <div class="difficulty-info">
                             <span class="difficulty-name">Medium</span>
-                            <span class="difficulty-desc">5 sentences + 5 stories</span>
+                            <span class="difficulty-desc">N5 + N4, longer stories</span>
                         </div>
                     </div>
                 </label>
@@ -44,7 +62,7 @@
                         <span class="difficulty-icon">🏯</span>
                         <div class="difficulty-info">
                             <span class="difficulty-name">Hard</span>
-                            <span class="difficulty-desc">10 stories</span>
+                            <span class="difficulty-desc">Advanced vocabulary</span>
                         </div>
                     </div>
                 </label>
@@ -76,16 +94,72 @@
         </div>
     </section>
 
-    <!-- Conversation mode -->
-    <section class="conversation-section">
-        <h2><span class="icon">🎙️</span> Conversation</h2>
-        <p class="conversation-desc">Practice speaking Japanese with an AI partner</p>
-        <a href="/conversation" class="conversation-link">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V20h4v2H8v-2h4v-4.07z"/>
-            </svg>
-            Start Conversation
-        </a>
+    <!-- Quick links grid -->
+    <section class="quick-links-section">
+        <div class="quick-links-grid">
+            <a href="/conversation" class="quick-link-card">
+                <div class="quick-link-icon">🎙️</div>
+                <h3>Conversation</h3>
+                <p>Practice speaking Japanese with an AI partner</p>
+            </a>
+
+            <a href="/stats" class="quick-link-card">
+                <div class="quick-link-icon">📊</div>
+                <h3>Progress Stats</h3>
+                <p>Track your learning journey and streaks</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- Learning Tips -->
+    <section class="learning-tips">
+        <h2><span class="icon">✏️</span> How to Learn Effectively</h2>
+        <div class="tips-grid">
+            <div class="tip-card">
+                <span class="tip-icon">📝</span>
+                <h3>Handwriting Method</h3>
+                <p>Listen to audio, write in notebook, then check. Handwriting improves retention by 40-60%.</p>
+                <ul class="tip-steps">
+                    <li>Press <kbd>Space</kbd> to play audio</li>
+                    <li>Write what you hear in Japanese</li>
+                    <li>Press <kbd>W</kbd> to reveal and check</li>
+                    <li>Correct mistakes in different color</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <span class="tip-icon">🎧</span>
+                <h3>Listening Practice</h3>
+                <p>Hide words for pure listening exercises. Perfect for training your ear.</p>
+                <ul class="tip-steps">
+                    <li>Press <kbd>W</kbd> to hide Japanese text</li>
+                    <li>Listen multiple times (<kbd>Space</kbd>)</li>
+                    <li>Write what you hear</li>
+                    <li>Reveal to check accuracy</li>
+                </ul>
+            </div>
+
+            <div class="tip-card">
+                <span class="tip-icon">📚</span>
+                <h3>Vocabulary Building</h3>
+                <p>Hover over any word to see its meaning and pronunciation. Build your vocabulary naturally.</p>
+                <ul class="tip-steps">
+                    <li>Hover words for instant translations</li>
+                    <li>Write new words in vocabulary section</li>
+                    <li>Review particles (は, が, を)</li>
+                    <li>Use topics relevant to your interests</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="guide-link-container">
+            <a href="/guide" class="guide-link">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                View Complete Learning Guide
+            </a>
+        </div>
     </section>
 
     <!-- Topic selection modal -->

@@ -1,80 +1,137 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(${title}, ~{::main})}">
-<head>
+<html
+  lang="en"
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{layout/main :: layout(${title}, ~{::main})}"
+>
+  <head>
     <title>Session - Tanoshii</title>
-</head>
-<body>
-<main class="container session" th:if="${session != null}">
-    <!-- Session header with home link -->
-    <header class="session-header">
-        <a href="/" class="home-link">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+  </head>
+  <body>
+    <main class="container session" th:if="${session != null}">
+      <!-- Session header with home, print, and help links -->
+      <header class="session-header">
+        <div class="header-left">
+          <a href="/" class="home-link">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="20"
+              height="20"
+            >
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
             </svg>
             <span>Home</span>
-        </a>
-    </header>
+          </a>
+        </div>
+        <div class="header-right">
+          <a th:href="@{/session/{id}/print(id=${session.id})}" class="print-link" title="Print all tasks">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="20"
+              height="20"
+            >
+              <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+            </svg>
+            <span>Print</span>
+          </a>
+          <a href="/guide" class="help-link" title="Learning tips and guide">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              width="20"
+              height="20"
+            >
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            <span>Help</span>
+          </a>
+        </div>
+      </header>
 
-    <!-- Progress bar -->
-    <div class="progress-bar">
+      <!-- Progress bar -->
+      <div class="progress-bar">
         <div class="progress-text">
-            <span id="current-position" th:text="${currentIndex + 1}">1</span> / <span id="total-tasks" th:text="${totalTasks}">10</span>
-            <span id="generating-indicator" class="generating-indicator" style="display: none;">
-                (generating <span id="generated-count">1</span>/<span id="expected-count">10</span>)
-            </span>
+          <span id="current-position" th:text="${currentIndex + 1}">1</span> /
+          <span id="total-tasks" th:text="${totalTasks}">10</span>
+          <span
+            id="generating-indicator"
+            class="generating-indicator"
+            style="display: none"
+          >
+            (generating <span id="generated-count">1</span>/<span
+              id="expected-count"
+              >10</span
+            >)
+          </span>
         </div>
         <div class="progress-track">
-            <div class="progress-fill" th:style="|width: ${(currentIndex + 1) * 100 / totalTasks}%|"></div>
+          <div
+            class="progress-fill"
+            th:style="|width: ${(currentIndex + 1) * 100 / totalTasks}%|"
+          ></div>
         </div>
-    </div>
+      </div>
 
-    <!-- Task container -->
-    <div id="task-container"
-         th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex})}"
-         hx-trigger="load"
-         hx-swap="innerHTML">
+      <!-- Task container -->
+      <div
+        id="task-container"
+        th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex})}"
+        hx-trigger="load"
+        hx-swap="innerHTML"
+      >
         <div class="loading">
-            <div class="spinner"></div>
-            <p>Loading task...</p>
+          <div class="spinner"></div>
+          <p>Loading task...</p>
         </div>
-    </div>
+      </div>
 
-    <!-- Navigation -->
-    <nav class="task-nav" id="nav-controls">
-        <button id="btn-back"
-                class="btn btn-secondary"
-                th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex - 1})}"
-                hx-target="#task-container"
-                hx-swap="innerHTML"
-                th:disabled="${currentIndex == 0}"
-                onpointerdown="this.classList.add('pressed');"
-                onpointerup="this.classList.remove('pressed');">
-            <kbd class="key-hint-btn">←</kbd> Back
+      <!-- Navigation -->
+      <nav class="task-nav" id="nav-controls">
+        <button
+          id="btn-back"
+          class="btn btn-secondary"
+          th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex - 1})}"
+          hx-target="#task-container"
+          hx-swap="innerHTML"
+          th:disabled="${currentIndex == 0}"
+          onpointerdown="this.classList.add('pressed');"
+          onpointerup="this.classList.remove('pressed');"
+        >
+          <kbd class="key-hint-btn">←</kbd> Back
         </button>
 
-        <button id="btn-reveal"
-                class="btn btn-primary"
-                th:hx-post="@{/api/session/{id}/task/{index}/reveal(id=${session.id}, index=${currentIndex})}"
-                hx-target="#translation-area"
-                hx-swap="innerHTML"
-                onpointerdown="this.classList.add('pressed');">
-            Show Translation <kbd class="key-hint-btn">S</kbd>
+        <button
+          id="btn-reveal"
+          class="btn btn-primary"
+          th:hx-post="@{/api/session/{id}/task/{index}/reveal(id=${session.id}, index=${currentIndex})}"
+          hx-target="#translation-area"
+          hx-swap="innerHTML"
+          onpointerdown="this.classList.add('pressed');"
+        >
+          Show Translation <kbd class="key-hint-btn">S</kbd>
         </button>
 
-        <button id="btn-next"
-                class="btn btn-secondary"
-                th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex + 1})}"
-                hx-target="#task-container"
-                hx-swap="innerHTML"
-                th:disabled="${currentIndex >= totalTasks - 1}"
-                onpointerdown="this.classList.add('pressed');"
-                onpointerup="this.classList.remove('pressed');">
-            Next <kbd class="key-hint-btn">→</kbd>
+        <button
+          id="btn-next"
+          class="btn btn-secondary"
+          th:hx-get="@{/api/session/{id}/task/{index}(id=${session.id}, index=${currentIndex + 1})}"
+          hx-target="#task-container"
+          hx-swap="innerHTML"
+          th:disabled="${currentIndex >= totalTasks - 1}"
+          onpointerdown="this.classList.add('pressed');"
+          onpointerup="this.classList.remove('pressed');"
+        >
+          Next <kbd class="key-hint-btn">→</kbd>
         </button>
-    </nav>
+      </nav>
 
-    <script th:inline="javascript">
-        const sessionId = /*[[${session.id}]]*/ '';
+      <script th:inline="javascript">
+        const sessionId = /*[[${session.id}]]*/ "";
         let currentIndex = /*[[${currentIndex}]]*/ 0;
         let totalTasks = /*[[${totalTasks}]]*/ 10;
         let generatedTasks = 1; // At least first task is ready
@@ -82,207 +139,228 @@
         let statusPollInterval = null;
 
         // Ensure HTMX processes buttons on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            htmx.process(document.getElementById('nav-controls'));
-            // Start polling for generation status
-            pollGenerationStatus();
+        document.addEventListener("DOMContentLoaded", function () {
+          htmx.process(document.getElementById("nav-controls"));
+          // Start polling for generation status
+          pollGenerationStatus();
         });
 
         async function pollGenerationStatus() {
-            if (generationComplete) return;
+          if (generationComplete) return;
 
-            try {
-                const response = await fetch(`/api/session/${sessionId}/status`);
-                const status = await response.json();
+          try {
+            const response = await fetch(`/api/session/${sessionId}/status`);
+            const status = await response.json();
 
-                generatedTasks = status.generated;
-                totalTasks = status.total || totalTasks;
-                generationComplete = status.complete;
+            generatedTasks = status.generated;
+            totalTasks = status.total || totalTasks;
+            generationComplete = status.complete;
 
-                // Update UI
-                updateGenerationIndicator();
-                updateNavButtons();
+            // Update UI
+            updateGenerationIndicator();
+            updateNavButtons();
 
-                // Continue polling if not complete
-                if (!generationComplete) {
-                    statusPollInterval = setTimeout(pollGenerationStatus, 1000);
-                }
-            } catch (e) {
-                console.error('Failed to poll status:', e);
-                // Retry after delay
-                statusPollInterval = setTimeout(pollGenerationStatus, 2000);
+            // Continue polling if not complete
+            if (!generationComplete) {
+              statusPollInterval = setTimeout(pollGenerationStatus, 1000);
             }
+          } catch (e) {
+            console.error("Failed to poll status:", e);
+            // Retry after delay
+            statusPollInterval = setTimeout(pollGenerationStatus, 2000);
+          }
         }
 
         function updateGenerationIndicator() {
-            const indicator = document.getElementById('generating-indicator');
-            const generatedCount = document.getElementById('generated-count');
-            const expectedCount = document.getElementById('expected-count');
-            const totalEl = document.getElementById('total-tasks');
+          const indicator = document.getElementById("generating-indicator");
+          const generatedCount = document.getElementById("generated-count");
+          const expectedCount = document.getElementById("expected-count");
+          const totalEl = document.getElementById("total-tasks");
 
-            if (generationComplete) {
-                if (indicator) indicator.style.display = 'none';
-            } else {
-                if (indicator) indicator.style.display = 'inline';
-                if (generatedCount) generatedCount.textContent = generatedTasks;
-                if (expectedCount) expectedCount.textContent = totalTasks;
-            }
+          if (generationComplete) {
+            if (indicator) indicator.style.display = "none";
+          } else {
+            if (indicator) indicator.style.display = "inline";
+            if (generatedCount) generatedCount.textContent = generatedTasks;
+            if (expectedCount) expectedCount.textContent = totalTasks;
+          }
 
-            if (totalEl) totalEl.textContent = totalTasks;
+          if (totalEl) totalEl.textContent = totalTasks;
         }
 
         // Clear translation when starting to load new task
-        document.body.addEventListener('htmx:beforeRequest', function(event) {
-            if (event.detail.target.id === 'task-container') {
-                // Clear the translation area when navigating to a new task
-                const translationArea = document.getElementById('translation-area');
-                if (translationArea) {
-                    translationArea.innerHTML = '';
-                }
-                // Stop any playing audio
-                if (typeof currentAudio !== 'undefined' && currentAudio) {
-                    currentAudio.pause();
-                    currentAudio = null;
-                }
-                if (typeof setPlayingState === 'function') {
-                    setPlayingState(false);
-                }
+        document.body.addEventListener("htmx:beforeRequest", function (event) {
+          if (event.detail.target.id === "task-container") {
+            // Clear the translation area when navigating to a new task
+            const translationArea = document.getElementById("translation-area");
+            if (translationArea) {
+              translationArea.innerHTML = "";
             }
+            // Stop any playing audio
+            if (typeof currentAudio !== "undefined" && currentAudio) {
+              currentAudio.pause();
+              currentAudio = null;
+            }
+            if (typeof setPlayingState === "function") {
+              setPlayingState(false);
+            }
+          }
         });
 
         // Update navigation buttons after HTMX swaps
-        document.body.addEventListener('htmx:afterSwap', function(event) {
-            if (event.detail.target.id === 'task-container') {
-                // Extract new index from the loaded content
-                const taskContent = event.detail.target.querySelector('[data-task-index]');
-                if (taskContent) {
-                    currentIndex = parseInt(taskContent.dataset.taskIndex, 10);
-                    updateNavButtons();
-                    updateProgressBar();
-                    // Apply reading aid settings after loading new task
-                    if (typeof applyReadingAidSettings === 'function') {
-                        applyReadingAidSettings();
-                    }
-                    // Auto-play audio if enabled
-                    if (typeof autoPlayIfEnabled === 'function') {
-                        autoPlayIfEnabled();
-                    }
-                }
+        document.body.addEventListener("htmx:afterSwap", function (event) {
+          if (event.detail.target.id === "task-container") {
+            // Extract new index from the loaded content
+            const taskContent =
+              event.detail.target.querySelector("[data-task-index]");
+            if (taskContent) {
+              currentIndex = parseInt(taskContent.dataset.taskIndex, 10);
+              updateNavButtons();
+              updateProgressBar();
+              // Apply reading aid settings after loading new task
+              if (typeof applyReadingAidSettings === "function") {
+                applyReadingAidSettings();
+              }
+              // Auto-play audio if enabled
+              if (typeof autoPlayIfEnabled === "function") {
+                autoPlayIfEnabled();
+              }
             }
+          }
         });
 
         function updateNavButtons() {
-            const backBtn = document.getElementById('btn-back');
-            const nextBtn = document.getElementById('btn-next');
-            const revealBtn = document.getElementById('btn-reveal');
+          const backBtn = document.getElementById("btn-back");
+          const nextBtn = document.getElementById("btn-next");
+          const revealBtn = document.getElementById("btn-reveal");
 
-            if (backBtn) {
-                backBtn.disabled = currentIndex === 0;
-                backBtn.setAttribute('hx-get', `/api/session/${sessionId}/task/${currentIndex - 1}`);
-                htmx.process(backBtn);
-            }
-            if (nextBtn) {
-                // Disable if at end OR if next task not yet generated
-                const nextTaskReady = (currentIndex + 1) < generatedTasks;
-                const atEnd = currentIndex >= totalTasks - 1;
-                nextBtn.disabled = atEnd || !nextTaskReady;
+          if (backBtn) {
+            backBtn.disabled = currentIndex === 0;
+            backBtn.setAttribute(
+              "hx-get",
+              `/api/session/${sessionId}/task/${currentIndex - 1}`,
+            );
+            htmx.process(backBtn);
+          }
+          if (nextBtn) {
+            // Disable if at end OR if next task not yet generated
+            const nextTaskReady = currentIndex + 1 < generatedTasks;
+            const atEnd = currentIndex >= totalTasks - 1;
+            nextBtn.disabled = atEnd || !nextTaskReady;
 
-                // Show generating hint if waiting
-                if (!atEnd && !nextTaskReady) {
-                    nextBtn.innerHTML = 'Generating...';
-                } else {
-                    nextBtn.innerHTML = 'Next <kbd class="key-hint-btn">→</kbd>';
-                }
+            // Show generating hint if waiting
+            if (!atEnd && !nextTaskReady) {
+              nextBtn.innerHTML = "Generating...";
+            } else {
+              nextBtn.innerHTML = 'Next <kbd class="key-hint-btn">→</kbd>';
+            }
 
-                nextBtn.setAttribute('hx-get', `/api/session/${sessionId}/task/${currentIndex + 1}`);
-                htmx.process(nextBtn);
-            }
-            if (revealBtn) {
-                revealBtn.setAttribute('hx-post', `/api/session/${sessionId}/task/${currentIndex}/reveal`);
-                htmx.process(revealBtn);
-            }
+            nextBtn.setAttribute(
+              "hx-get",
+              `/api/session/${sessionId}/task/${currentIndex + 1}`,
+            );
+            htmx.process(nextBtn);
+          }
+          if (revealBtn) {
+            revealBtn.setAttribute(
+              "hx-post",
+              `/api/session/${sessionId}/task/${currentIndex}/reveal`,
+            );
+            htmx.process(revealBtn);
+          }
         }
 
         function updateProgressBar() {
-            const progressFill = document.querySelector('.progress-fill');
-            const currentPos = document.getElementById('current-position');
-            const totalEl = document.getElementById('total-tasks');
+          const progressFill = document.querySelector(".progress-fill");
+          const currentPos = document.getElementById("current-position");
+          const totalEl = document.getElementById("total-tasks");
 
-            if (progressFill) {
-                progressFill.style.width = ((currentIndex + 1) * 100 / totalTasks) + '%';
-            }
-            if (currentPos) {
-                currentPos.textContent = currentIndex + 1;
-            }
-            if (totalEl) {
-                totalEl.textContent = totalTasks;
-            }
+          if (progressFill) {
+            progressFill.style.width =
+              (((currentIndex + 1) * 100) / totalTasks ?? 10) + "%";
+          }
+
+          if (currentPos) {
+            currentPos.textContent = currentIndex + 1;
+          }
+
+          if (totalEl) {
+            totalEl.textContent = totalTasks;
+          }
         }
 
         // Keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            // Don't trigger shortcuts when typing in textarea
-            if (event.target.tagName === 'TEXTAREA' || event.target.tagName === 'INPUT') {
-                return;
-            }
+        document.addEventListener("keydown", function (event) {
+          // Don't trigger shortcuts when typing in textarea
+          if (
+            event.target.tagName === "TEXTAREA" ||
+            event.target.tagName === "INPUT"
+          ) {
+            return;
+          }
 
-            // Space: Play/pause audio
-            if (event.code === 'Space') {
-                event.preventDefault();
-                const audioBtn = document.getElementById('audio-play-btn');
-                if (audioBtn) audioBtn.click();
-            }
-            // ArrowLeft: Previous task
-            else if (event.code === 'ArrowLeft') {
-                event.preventDefault();
-                const backBtn = document.getElementById('btn-back');
-                if (backBtn && !backBtn.disabled) backBtn.click();
-            }
-            // ArrowRight: Next task
-            else if (event.code === 'ArrowRight') {
-                event.preventDefault();
-                const nextBtn = document.getElementById('btn-next');
-                if (nextBtn && !nextBtn.disabled) nextBtn.click();
-            }
-            // S: Show translation
-            else if (event.code === 'KeyS') {
-                event.preventDefault();
-                const revealBtn = document.getElementById('btn-reveal');
-                if (revealBtn) revealBtn.click();
-            }
-            // W: Toggle words
-            else if (event.code === 'KeyW') {
-                event.preventDefault();
-                if (typeof toggleWords === 'function') toggleWords();
-            }
-            // A: Toggle autoplay
-            else if (event.code === 'KeyA') {
-                event.preventDefault();
-                if (typeof toggleAutoplay === 'function') toggleAutoplay();
-            }
-            // F: Toggle furigana
-            else if (event.code === 'KeyF') {
-                event.preventDefault();
-                if (typeof toggleFurigana === 'function') toggleFurigana();
-            }
-            // R: Toggle romaji
-            else if (event.code === 'KeyR') {
-                event.preventDefault();
-                if (typeof toggleRomaji === 'function') toggleRomaji();
-            }
-            // T: Toggle translations/tooltips
-            else if (event.code === 'KeyT') {
-                event.preventDefault();
-                if (typeof toggleTooltips === 'function') toggleTooltips();
-            }
+          // Space: Play/pause audio
+          if (event.code === "Space") {
+            event.preventDefault();
+            const audioBtn = document.getElementById("audio-play-btn");
+            if (audioBtn) audioBtn.click();
+          }
+          // ArrowLeft: Previous task
+          else if (event.code === "ArrowLeft") {
+            event.preventDefault();
+            const backBtn = document.getElementById("btn-back");
+            if (backBtn && !backBtn.disabled) backBtn.click();
+          }
+          // ArrowRight: Next task
+          else if (event.code === "ArrowRight") {
+            event.preventDefault();
+            const nextBtn = document.getElementById("btn-next");
+            if (nextBtn && !nextBtn.disabled) nextBtn.click();
+          }
+          // S: Show translation
+          else if (event.code === "KeyS") {
+            event.preventDefault();
+            const revealBtn = document.getElementById("btn-reveal");
+            if (revealBtn) revealBtn.click();
+          }
+          // W: Toggle words
+          else if (event.code === "KeyW") {
+            event.preventDefault();
+            if (typeof toggleWords === "function") toggleWords();
+          }
+          // A: Toggle autoplay
+          else if (event.code === "KeyA") {
+            event.preventDefault();
+            if (typeof toggleAutoplay === "function") toggleAutoplay();
+          }
+          // F: Toggle furigana
+          else if (event.code === "KeyF") {
+            event.preventDefault();
+            if (typeof toggleFurigana === "function") toggleFurigana();
+          }
+          // R: Toggle romaji
+          else if (event.code === "KeyR") {
+            event.preventDefault();
+            if (typeof toggleRomaji === "function") toggleRomaji();
+          }
+          // T: Toggle translations/tooltips
+          else if (event.code === "KeyT") {
+            event.preventDefault();
+            if (typeof toggleTooltips === "function") toggleTooltips();
+          }
+          // L: Toggle listening mode
+          else if (event.code === "KeyL") {
+            event.preventDefault();
+            if (typeof toggleListeningMode === "function") toggleListeningMode();
+          }
         });
-    </script>
-</main>
+      </script>
+    </main>
 
-<main class="container error" th:if="${session == null}">
-    <h1>Session not found</h1>
-    <p>The session you're looking for doesn't exist.</p>
-    <a href="/" class="btn btn-primary">Go to home</a>
-</main>
-</body>
+    <main class="container error" th:if="${session == null}">
+      <h1>Session not found</h1>
+      <p>The session you're looking for doesn't exist.</p>
+      <a href="/" class="btn btn-primary">Go to home</a>
+    </main>
+  </body>
 </html>

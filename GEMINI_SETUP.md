@@ -26,9 +26,10 @@ Edit `src/main/resources/application.yml`:
 ```yaml
 llm:
   provider: gemini  # Change from "ollama" to "gemini"
-  base-url: https://generativelanguage.googleapis.com
-  model: gemini-1.5-flash
+  model: gemini-3-flash-preview  # Model name for Gemini
   api-key: ${GOOGLE_AI_API_KEY}  # Set via environment variable
+
+  # Note: base-url is not used with the official Gemini SDK
 ```
 
 ### 3. Set Environment Variable
@@ -66,7 +67,7 @@ services:
     environment:
       - LLM_PROVIDER=gemini
       - LLM_BASE_URL=https://generativelanguage.googleapis.com
-      - LLM_MODEL=gemini-1.5-flash
+      - LLM_MODEL=gemini-3-flash-preview
       - LLM_API_KEY=${GOOGLE_AI_API_KEY}
     # Remove ollama service dependency
 ```
@@ -99,11 +100,11 @@ After free tier, costs are very low:
 
 | Model | Speed | Quality | Cost |
 |-------|-------|---------|------|
-| `gemini-1.5-flash` | Fast | Excellent | Free tier + cheap |
+| `gemini-3-flash-preview` | Fast | Excellent | Free tier + cheap |
 | `gemini-1.5-pro` | Medium | Best | Higher cost |
 | `gemini-1.0-pro` | Fast | Good | Free tier |
 
-**Recommendation**: Use `gemini-1.5-flash` (best balance)
+**Recommendation**: Use `gemini-3-flash-preview` (best balance)
 
 ## Troubleshooting
 

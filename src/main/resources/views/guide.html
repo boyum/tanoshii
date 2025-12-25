@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/main :: layout(${title}, ~{::main})}">
+<head>
+    <title>Learning Guide - Tanoshii</title>
+</head>
+<body>
+<main class="container guide">
+    <header class="guide-header">
+        <a href="/" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            Back to Home
+        </a>
+        <h1>✏️ Complete Learning Guide</h1>
+        <p class="guide-subtitle">Maximize your Japanese learning with these proven methods</p>
+    </header>
+
+    <section class="guide-section">
+        <h2>🎯 Optimal Learning Workflows</h2>
+
+        <div class="method-card">
+            <h3>Method 1: Write-First Approach</h3>
+            <p class="method-desc"><strong>Best for:</strong> Handwriting learners who want maximum retention</p>
+
+            <div class="setup-box">
+                <h4>Setup</h4>
+                <ul>
+                    <li>Enable furigana (press <kbd>F</kbd>) if you're still learning kanji</li>
+                    <li>Turn OFF "Show words" (press <kbd>W</kbd>) for maximum challenge</li>
+                    <li>Have notebook + pen ready (use different colors for corrections)</li>
+                </ul>
+            </div>
+
+            <div class="workflow-steps">
+                <h4>Workflow</h4>
+                <ol>
+                    <li><strong>Listen:</strong> Press <kbd>Space</kbd> to play audio 2-3 times</li>
+                    <li><strong>Write:</strong> Hand-write what you hear in Japanese in your notebook</li>
+                    <li><strong>Check:</strong> Press <kbd>W</kbd> to reveal the Japanese text</li>
+                    <li><strong>Correct:</strong> Fix any mistakes in your notebook with a different color pen</li>
+                    <li><strong>Translate:</strong> Write English translation in your notebook</li>
+                    <li><strong>Verify:</strong> Type your translation and press <kbd>Enter</kbd> to check</li>
+                    <li><strong>Vocabulary:</strong> Hover over words you didn't know, write them down</li>
+                    <li><strong>Repeat:</strong> Review your handwritten corrections</li>
+                </ol>
+            </div>
+
+            <div class="why-box">
+                <h4>Why This Works</h4>
+                <p>Listening → writing → checking creates 3 memory touchpoints. Handwriting activates motor memory (proven to improve retention by 40-60%). Self-correction in different color highlights problem areas. The app provides instant verification without breaking your flow.</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h3>Method 2: Reading Comprehension + Writing</h3>
+            <p class="method-desc"><strong>Best for:</strong> Visual learners who prefer reading first</p>
+
+            <div class="setup-box">
+                <h4>Setup</h4>
+                <ul>
+                    <li>Keep "Show words" ON (press <kbd>W</kbd> to toggle)</li>
+                    <li>Disable furigana (press <kbd>F</kbd>) initially for challenge</li>
+                    <li>Auto-play OFF (press <kbd>A</kbd>) to control pace</li>
+                </ul>
+            </div>
+
+            <div class="workflow-steps">
+                <h4>Workflow</h4>
+                <ol>
+                    <li><strong>Read</strong> silently, try to guess the meaning</li>
+                    <li><strong>Write translation</strong> in your notebook (English)</li>
+                    <li><strong>Check with app:</strong> Type your translation, see feedback</li>
+                    <li><strong>Write Japanese sentence</strong> 3 times in notebook (copying for practice)</li>
+                    <li><strong>Vocabulary drill:</strong> Hover tooltips, write unknown words + meanings</li>
+                    <li><strong>Close eyes and write:</strong> Try writing the sentence from memory</li>
+                    <li><strong>Audio check:</strong> Press <kbd>Space</kbd>, follow along as you hear it</li>
+                </ol>
+            </div>
+
+            <div class="why-box">
+                <h4>Why This Works</h4>
+                <p>Reading → writing → copying → recall builds progressive difficulty. Multiple exposures to same sentence in different modes. Handwriting reinforces kanji stroke order and character recognition.</p>
+            </div>
+        </div>
+
+        <div class="method-card">
+            <h3>Method 3: Story Immersion</h3>
+            <p class="method-desc"><strong>Best for:</strong> Hard difficulty (3-4 sentence stories)</p>
+
+            <div class="setup-box">
+                <h4>Setup</h4>
+                <ul>
+                    <li>Select <strong>Hard difficulty</strong> for multi-sentence stories</li>
+                    <li>Choose interesting topics from the 135 options</li>
+                    <li>Furigana ON if needed (press <kbd>F</kbd>)</li>
+                </ul>
+            </div>
+
+            <div class="workflow-steps">
+                <h4>Workflow</h4>
+                <ol>
+                    <li><strong>Listen to full story</strong> multiple times, eyes closed</li>
+                    <li><strong>Write summary</strong> in English from memory</li>
+                    <li><strong>Reveal text:</strong> Read Japanese with furigana</li>
+                    <li><strong>Write full Japanese story</strong> in notebook (copying)</li>
+                    <li><strong>Vocabulary extraction:</strong> Hover + write all new words with example sentence</li>
+                    <li><strong>Hide text:</strong> Try to rewrite story from memory</li>
+                    <li><strong>Audio loop:</strong> Listen again while reading your handwritten version</li>
+                </ol>
+            </div>
+
+            <div class="why-box">
+                <h4>Why This Works</h4>
+                <p>Context makes vocabulary stick better than isolated words. Story structure aids memory. Multiple modalities: audio → reading → writing → recall creates deep encoding.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <h2>⚡ Keyboard Shortcuts Reference</h2>
+        <div class="shortcuts-grid">
+            <div class="shortcut-item">
+                <kbd>Space</kbd>
+                <span>Play/pause audio</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>W</kbd>
+                <span>Toggle show/hide words</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>A</kbd>
+                <span>Toggle auto-play audio</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>F</kbd>
+                <span>Toggle furigana</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>R</kbd>
+                <span>Toggle romaji</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>T</kbd>
+                <span>Toggle translations</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>←</kbd>
+                <span>Previous task</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>→</kbd>
+                <span>Next task</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>S</kbd>
+                <span>Show translation hint</span>
+            </div>
+            <div class="shortcut-item">
+                <kbd>Enter</kbd>
+                <span>Check answer</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <h2>📝 Notebook Organization</h2>
+        <div class="notebook-template">
+            <h3>Create a Learning Notebook with These Sections:</h3>
+
+            <div class="section-card">
+                <h4>1. Daily Sentences</h4>
+                <p>Track all sentences you practice with date, Japanese, English, and whether you got it right (✓/✗)</p>
+            </div>
+
+            <div class="section-card">
+                <h4>2. Corrections (Use Red Pen)</h4>
+                <p>What I wrote → Correct form. This highlights your common mistakes for review.</p>
+            </div>
+
+            <div class="section-card">
+                <h4>3. Vocabulary List</h4>
+                <p>Word | Reading | Meaning | Example sentence. Check off when you've used it 3 times.</p>
+            </div>
+
+            <div class="section-card">
+                <h4>4. Kanji Practice</h4>
+                <p>Character | Stroke order diagram | Practice 10x each</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <h2>📊 Daily Routine Suggestions</h2>
+
+        <div class="routine-card">
+            <h3>🌸 Beginner (N5 Level) - 20-30 minutes</h3>
+            <ul>
+                <li><strong>10 min:</strong> 5 Easy sentences - listen → write → check cycle</li>
+                <li><strong>10 min:</strong> Vocabulary from tooltips → handwrite flashcards</li>
+                <li><strong>10 min:</strong> Review previous day's corrections (rewrite from memory)</li>
+            </ul>
+            <div class="settings-note">
+                <strong>Settings:</strong> Furigana ON, Romaji ON, Auto-play ON, Show words ON
+            </div>
+        </div>
+
+        <div class="routine-card">
+            <h3>🎋 Intermediate (N4-N3) - 30-40 minutes</h3>
+            <ul>
+                <li><strong>15 min:</strong> 3 Medium + 2 Hard (mix sentences and stories)</li>
+                <li><strong>10 min:</strong> Deep vocabulary drill with particles (は, が, を)</li>
+                <li><strong>15 min:</strong> Rewrite previous sessions from memory</li>
+            </ul>
+            <div class="settings-note">
+                <strong>Settings:</strong> Furigana ON, Romaji OFF, Auto-play OFF, Toggle "Show words" as needed
+            </div>
+        </div>
+
+        <div class="routine-card">
+            <h3>🏯 Advanced (N2+) - 40-60 minutes</h3>
+            <ul>
+                <li><strong>20 min:</strong> 5 Hard difficulty stories</li>
+                <li><strong>20 min:</strong> Conversation mode practice</li>
+                <li><strong>20 min:</strong> Full story transcription from audio only</li>
+            </ul>
+            <div class="settings-note">
+                <strong>Settings:</strong> Furigana OFF initially, Show words OFF, Audio-first approach
+            </div>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <h2>🎓 Learning Science</h2>
+        <div class="science-grid">
+            <div class="science-card">
+                <h3>Active Recall</h3>
+                <p>Writing from memory is 3x more effective than passive reading. Force yourself to retrieve information rather than just recognizing it.</p>
+            </div>
+
+            <div class="science-card">
+                <h3>Multi-Modal Learning</h3>
+                <p>Audio + visual + motor (writing) = 3x memory encoding. Each mode reinforces the others.</p>
+            </div>
+
+            <div class="science-card">
+                <h3>Immediate Feedback</h3>
+                <p>App verification without 24-hour delay catches mistakes while they're fresh. Prevents bad habits from forming.</p>
+            </div>
+
+            <div class="science-card">
+                <h3>Spaced Repetition</h3>
+                <p>Come back to the app daily. Review notebook weekly. The spacing effect improves long-term retention.</p>
+            </div>
+
+            <div class="science-card">
+                <h3>Contextual Learning</h3>
+                <p>Topics + stories beat isolated vocabulary. Your brain remembers information better with context and narrative.</p>
+            </div>
+
+            <div class="science-card">
+                <h3>Motor Memory</h3>
+                <p>Handwriting improves character recognition by 40-60%. Your hand remembers what your mind might forget.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <h2>💡 Pro Tips</h2>
+        <div class="tips-list">
+            <div class="pro-tip">
+                <span class="tip-number">1</span>
+                <div class="tip-content">
+                    <h4>Don't Rush</h4>
+                    <p>Better to do 5 sentences deeply than 20 superficially. Quality over quantity always wins in language learning.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">2</span>
+                <div class="tip-content">
+                    <h4>Color Code Your Notebook</h4>
+                    <p>Blue (original writing), red (corrections), green (vocabulary notes). Visual cues help memory.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">3</span>
+                <div class="tip-content">
+                    <h4>Speak Aloud While Writing</h4>
+                    <p>Adds auditory memory to motor memory. Even whispering helps reinforce pronunciation.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">4</span>
+                <div class="tip-content">
+                    <h4>Use Topics Strategically</h4>
+                    <p>Pick topics relevant to your life or interests. You'll remember "cooking" vocabulary better if you love cooking.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">5</span>
+                <div class="tip-content">
+                    <h4>Weekend Review</h4>
+                    <p>Every Sunday, rewrite your week's sentences from memory. This spaced repetition solidifies learning.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">6</span>
+                <div class="tip-content">
+                    <h4>Shadow Writing</h4>
+                    <p>Advanced technique: Play audio and write in real-time as you hear it. Builds listening-writing connection.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">7</span>
+                <div class="tip-content">
+                    <h4>Vocabulary Mining</h4>
+                    <p>After 10 tasks, hover every unfamiliar word. Create flashcards with the actual sentence from the app as context.</p>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <span class="tip-number">8</span>
+                <div class="tip-content">
+                    <h4>Track Progress Patterns</h4>
+                    <p>Review your corrections section weekly. If you keep making the same mistake, that's your focus for next week.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="guide-section">
+        <h2>📈 Progress Tracking</h2>
+        <div class="tracking-card">
+            <h3>Weekly Review (Every Sunday)</h3>
+            <ol>
+                <li>Count sentences completed by difficulty (Easy/Medium/Hard)</li>
+                <li>Review notebook's "Corrections" section - identify patterns</li>
+                <li>Test yourself: Rewrite 10 random sentences from memory</li>
+                <li>Update vocabulary flashcards with words that appeared 3+ times</li>
+                <li>Set goals for next week based on what needs work</li>
+            </ol>
+        </div>
+    </section>
+
+    <footer class="guide-footer">
+        <p>Remember: Consistency beats intensity. 20 minutes daily is better than 3 hours once a week.</p>
+        <a href="/" class="btn btn-primary">Start Learning Now</a>
+    </footer>
+</main>
+</body>
+</html>

@@ -84,4 +84,64 @@ class ProgressRepository(private val dataSource: DataSource) {
             }
         }
     }
+
+    /**
+     * Get word mastery statistics by level:
+     * - Seen (1-2 encounters)
+     * - Learning (3-5 encounters)
+     * - Mastered (6+ encounters)
+     */
+    fun getWordMasteryStats(): MasteryStats {
+        dataSource.connection.use { conn ->
+            val sql = """
+                SELECT
+                    COUNT(CASE WHEN times_seen >= 1 AND times_seen <= 2 THEN 1 END) as seen_count,
+                    COUNT(CASE WHEN times_seen >= 3 AND times_seen <= 5 THEN 1 END) as learning_count,
+                    COUNT(CASE WHEN times_seen >= 6 THEN 1 END) as mastered_count
+                FROM word_progress
+            """.trimIndent()
+            conn.prepareStatement(sql).use { stmt ->
+                stmt.executeQuery().use { rs ->
+                    return if (rs.next()) {
+                        MasteryStats(
+                            seenCount = rs.getLong("seen_count"),
+                            learningCount = rs.getLong("learning_count"),
+                            masteredCount = rs.getLong("mastered_count")
+                        )
+                    } else {
+                        MasteryStats(0, 0, 0)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the mastery level for a specific word
+     */
+    fun getWordMasteryLevel(wordId: Long): MasteryLevel {
+        val progress = getProgress(wordId)
+        return when {
+            progress == null || progress.timesSeen == 0 -> MasteryLevel.UNSEEN
+            progress.timesSeen <= 2 -> MasteryLevel.SEEN
+            progress.timesSeen <= 5 -> MasteryLevel.LEARNING
+            else -> MasteryLevel.MASTERED
+        }
+    }
+}
+
+enum class MasteryLevel(val displayName: String, val emoji: String) {
+    UNSEEN("Unseen", "⚪"),
+    SEEN("Seen", "👀"),
+    LEARNING("Learning", "📖"),
+    MASTERED("Mastered", "✅")
+}
+
+data class MasteryStats(
+    val seenCount: Long,
+    val learningCount: Long,
+    val masteredCount: Long
+) {
+    val totalEncountered: Long
+        get() = seenCount + learningCount + masteredCount
 }

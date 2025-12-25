@@ -37,9 +37,11 @@ llm:
   provider: ${LLM_PROVIDER:`ollama`}
 
   # Base URL (can be overridden by LLM_BASE_URL env var)
+  # Note: For Gemini with official SDK, base-url is not used
   base-url: ${LLM_BASE_URL:`http://localhost:11434`}
 
   # Model name (can be overridden by LLM_MODEL env var)
+  # For Gemini: "gemini-2.5-flash" (stable), "gemini-2.5-pro", or "gemini-2.0-flash"
   model: ${LLM_MODEL:`qwen2.5:7b`}
 
   # API key (can be overridden by LLM_API_KEY or GOOGLE_AI_API_KEY env var)

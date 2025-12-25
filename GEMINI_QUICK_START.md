@@ -16,9 +16,10 @@ Edit `src/main/resources/application.yml`:
 ```yaml
 llm:
   provider: gemini  # ← Change this from "ollama" to "gemini"
-  base-url: https://generativelanguage.googleapis.com
-  model: gemini-1.5-flash
+  model: gemini-3-flash-preview  # ← Gemini model name
   api-key: ${GOOGLE_AI_API_KEY}  # ← Will read from environment
+
+  # Note: base-url is not used with official Gemini SDK
 ```
 
 ## Step 3: Set API Key

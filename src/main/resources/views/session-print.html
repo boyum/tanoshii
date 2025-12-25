@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Print Session - Tanoshii</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        @media print {
+            body {
+                font-size: 12pt;
+                line-height: 1.5;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-page {
+                page-break-after: always;
+            }
+            .task-print {
+                page-break-inside: avoid;
+                margin-bottom: 2cm;
+            }
+        }
+
+        @media screen {
+            .print-container {
+                max-width: 21cm;
+                margin: 2rem auto;
+                padding: 2rem;
+                background: white;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <!-- Header with print and back buttons -->
+        <div class="no-print" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <a th:href="@{/session/{id}(id=${session.id})}" class="btn btn-secondary">
+                ← Back to Session
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Print
+            </button>
+        </div>
+
+        <!-- Print Header -->
+        <header class="print-header" style="text-align: center; margin-bottom: 3rem; padding-bottom: 1rem; border-bottom: 2px solid var(--border);">
+            <h1 style="font-size: 2rem; color: var(--secondary); margin-bottom: 0.5rem;">Tanoshii - Japanese Practice</h1>
+            <p style="color: var(--text-muted); font-size: 1rem;">
+                <strong>Difficulty:</strong> <span th:text="${#strings.capitalize(session.difficulty.name().toLowerCase())}">Easy</span>
+                <span th:if="${session.topic}" style="margin-left: 1rem;">
+                    | <strong>Topic:</strong> <span th:text="${session.topic}">Topic</span>
+                </span>
+            </p>
+            <p style="color: var(--text-light); font-size: 0.875rem; margin-top: 0.5rem;">
+                Date: <span th:text="${#temporals.format(session.createdAt, 'MMM dd, yyyy')}">Jan 01, 2024</span>
+            </p>
+        </header>
+
+        <!-- Tasks -->
+        <div class="tasks-print">
+            <div th:each="task, iterStat : ${tasks}" class="task-print"
+                 style="margin-bottom: 3rem; padding: 1.5rem; border: 2px solid var(--border); border-radius: 8px;">
+
+                <!-- Task number -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="font-size: 1.25rem; color: var(--primary); margin: 0;">
+                        Task <span th:text="${iterStat.index + 1}">1</span>
+                    </h2>
+                    <span style="color: var(--text-light); font-size: 0.875rem;" th:text="${task.type.name().toLowerCase()}">sentence</span>
+                </div>
+
+                <!-- Japanese text (large for handwriting practice) -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Japanese</h3>
+                    <p style="font-size: 1.5rem; line-height: 2; color: var(--text); font-weight: 500; margin: 0;"
+                       th:text="${task.japaneseText}">日本語の文</p>
+                </div>
+
+                <!-- Furigana -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Reading (Furigana)</h3>
+                    <p style="font-size: 1rem; line-height: 1.8; color: var(--text-muted); margin: 0;"
+                       th:utext="${task.furiganaText}">ふりがな</p>
+                </div>
+
+                <!-- Romaji -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Romaji</h3>
+                    <p style="font-size: 1rem; line-height: 1.8; color: var(--text-muted); margin: 0;"
+                       th:text="${task.romajiText}">romaji</p>
+                </div>
+
+                <!-- English translation -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">English Translation</h3>
+                    <p style="font-size: 1rem; line-height: 1.8; color: var(--text); margin: 0;"
+                       th:text="${task.englishTranslation}">English translation</p>
+                </div>
+
+                <!-- Practice area -->
+                <div style="border-top: 2px dashed var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">Practice Space</h3>
+                    <div style="border: 1px solid var(--border); border-radius: 4px; padding: 1rem; min-height: 4rem; background: var(--accent-warm);">
+                        <!-- Empty space for handwriting -->
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.5rem; font-style: italic;">
+                        ✏️ Write your translation here, then check against the English above
+                    </p>
+                </div>
+
+                <!-- Vocabulary (if available) -->
+                <div th:if="${task.wordTranslations != null and !task.wordTranslations.isEmpty()}"
+                     style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+                    <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Vocabulary</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.5rem;">
+                        <div th:each="entry : ${task.wordTranslations}" style="font-size: 0.875rem;">
+                            <strong th:text="${entry.key}" style="color: var(--text);">Word</strong>:
+                            <span th:text="${entry.value}" style="color: var(--text-muted);">meaning</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="no-print" style="text-align: center; padding-top: 2rem; margin-top: 3rem; border-top: 2px solid var(--border); color: var(--text-muted);">
+            <p>Practice daily for best results! Visit <strong>Tanoshii</strong> to continue learning.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Auto-print dialog on page load (optional)
+        // Uncomment if you want automatic print dialog
+        // window.addEventListener('load', () => {
+        //     setTimeout(() => window.print(), 500);
+        // });
+    </script>
+</body>
+</html>

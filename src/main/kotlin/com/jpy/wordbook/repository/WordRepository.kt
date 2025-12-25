@@ -96,6 +96,25 @@ class WordRepository(private val dataSource: DataSource) {
         }
     }
 
+    fun findRandomWordsByCategories(count: Int, categoryPrefixes: List<String>): List<Word> {
+        dataSource.connection.use { conn ->
+            // Build WHERE clause with LIKE conditions for each category prefix
+            val whereConditions = categoryPrefixes.joinToString(" OR ") { "category LIKE ?" }
+            val sql = "SELECT * FROM words WHERE $whereConditions ORDER BY RANDOM() LIMIT ?"
+
+            conn.prepareStatement(sql).use { stmt ->
+                categoryPrefixes.forEachIndexed { index, prefix ->
+                    stmt.setString(index + 1, "$prefix%")
+                }
+                stmt.setInt(categoryPrefixes.size + 1, count)
+
+                stmt.executeQuery().use { rs ->
+                    return generateSequence { if (rs.next()) mapRow(rs) else null }.toList()
+                }
+            }
+        }
+    }
+
     fun count(): Long {
         dataSource.connection.use { conn ->
             conn.prepareStatement("SELECT COUNT(*) FROM words").use { stmt ->

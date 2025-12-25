@@ -272,6 +272,7 @@
         const romajiEnabled = localStorage.getItem("romajiEnabled") !== "false";
         const tooltipsEnabled =
           localStorage.getItem("tooltipsEnabled") !== "false";
+        const listeningMode = localStorage.getItem("listeningMode") === "true";
 
         // Update toggle buttons
         const wordsBtn = document.getElementById("toggle-words");
@@ -279,6 +280,7 @@
         const furiganaBtn = document.getElementById("toggle-furigana");
         const romajiBtn = document.getElementById("toggle-romaji");
         const tooltipsBtn = document.getElementById("toggle-tooltips");
+        const listeningBtn = document.getElementById("listening-mode-btn");
 
         if (wordsBtn) {
           wordsBtn.classList.toggle("enabled", wordsEnabled);
@@ -294,6 +296,9 @@
         }
         if (tooltipsBtn) {
           tooltipsBtn.classList.toggle("enabled", tooltipsEnabled);
+        }
+        if (listeningBtn) {
+          listeningBtn.classList.toggle("active", listeningMode);
         }
 
         // Update words visibility

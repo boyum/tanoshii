@@ -108,7 +108,7 @@ export LLM_MODEL=qwen2.5:7b
 ```bash
 export LLM_PROVIDER=gemini
 export LLM_BASE_URL=https://generativelanguage.googleapis.com
-export LLM_MODEL=gemini-1.5-flash
+export LLM_MODEL=gemini-3-flash-preview
 export GOOGLE_AI_API_KEY=your-key-here
 ```
 
@@ -178,7 +178,7 @@ LLM_API_KEY=
 # For Gemini (edit to these values)
 LLM_PROVIDER=gemini
 LLM_BASE_URL=https://generativelanguage.googleapis.com
-LLM_MODEL=gemini-1.5-flash
+LLM_MODEL=gemini-3-flash-preview
 GOOGLE_AI_API_KEY=your-key-here
 ```
 
